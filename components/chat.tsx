@@ -71,8 +71,7 @@ export function Chat({
           chatId={id}
           selectedModelId={selectedChatModel}
           selectedVisibilityType={selectedVisibilityType}
-          isReadonly={isReadonly}
-        />
+          isReadonly={isReadonly} userId={''} selectedPromptId={''}        />
 
         <Messages
           chatId={id}
