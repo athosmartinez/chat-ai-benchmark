@@ -118,10 +118,10 @@ export const suggestion = pgTable(
 export type Suggestion = InferSelectModel<typeof suggestion>;
 
 export const prompts = pgTable("Prompts", {
-  id: uuid("id").notNull().defaultRandom(),
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
   name: text("name").notNull(),
-  createdAt: timestamp("created_at").notNull(),
-  userId: uuid("user_id")
+  createdAt: timestamp("createdAt").notNull(),
+  userId: uuid("userId")
     .notNull()
     .references(() => user.id),
   prompt: text("prompt").notNull(),

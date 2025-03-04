@@ -166,7 +166,7 @@ export async function getVotesByChatId({ id }: { id: string }) {
   try {
     return await db.select().from(vote).where(eq(vote.chatId, id));
   } catch (error) {
-    console.error("Failed to get votes by chat id from database", error);
+    console.error("Failed to get votes by chat id from database");
     throw error;
   }
 }
@@ -354,16 +354,17 @@ export async function savePrompt({
   userId,
   prompt,
   name,
+  createdAt = new Date(), // Setting default value for backward compatibility
 }: {
   userId: string;
   prompt: string;
   name: string;
-  createdAt: Date;
+  createdAt?: Date;
 }) {
   try {
     return await db
       .insert(prompts)
-      .values({ userId, prompt, name, createdAt: new Date() });
+      .values({ userId, prompt, name, createdAt: createdAt || new Date() });
   } catch (error) {
     console.error("Failed to save prompt in database");
     throw error;
@@ -384,6 +385,45 @@ export async function getPrompts({ userId }: { userId: string }) {
     return await db.select().from(prompts).where(eq(prompts.userId, userId));
   } catch (error) {
     console.error("Failed to get prompts from database");
+    throw error;
+  }
+}
+
+// Add the missing getPromptById function
+export async function getPromptById({ id }: { id: string }) {
+  try {
+    const [selectedPrompt] = await db.select().from(prompts).where(eq(prompts.id, id));
+    return selectedPrompt || null;
+  } catch (error) {
+    console.error("Failed to get prompt by id from database");
+    throw error;
+  }
+}
+
+// Add updatePrompt function
+export async function updatePrompt({
+  id,
+  name,
+  prompt
+}: {
+  id: string;
+  name?: string;
+  prompt?: string;
+}) {
+  try {
+    const updateData: Record<string, any> = {};
+    if (name !== undefined) updateData.name = name;
+    if (prompt !== undefined) updateData.prompt = prompt;
+    
+    if (Object.keys(updateData).length === 0) return null;
+    
+    await db.update(prompts)
+      .set(updateData)
+      .where(eq(prompts.id, id));
+      
+    return getPromptById({ id });
+  } catch (error) {
+    console.error("Failed to update prompt in database");
     throw error;
   }
 }
