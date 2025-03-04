@@ -113,6 +113,9 @@
       "bufferutil",
       "esbuild",
       "sharp"
-    ]
+    ],
+    "overrides": {
+      "@ai-sdk/provider": "1.0.9"
+    }
   }
 }
