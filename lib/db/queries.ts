@@ -389,7 +389,6 @@ export async function getPrompts({ userId }: { userId: string }) {
   }
 }
 
-// Add the missing getPromptById function
 export async function getPromptById({ id }: { id: string }) {
   try {
     const [selectedPrompt] = await db.select().from(prompts).where(eq(prompts.id, id));
@@ -400,7 +399,6 @@ export async function getPromptById({ id }: { id: string }) {
   }
 }
 
-// Add updatePrompt function
 export async function updatePrompt({
   id,
   name,

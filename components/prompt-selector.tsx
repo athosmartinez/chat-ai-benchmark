@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Edit } from 'lucide-react';
 
 import { Button } from './ui/button';
 import {
@@ -54,8 +54,12 @@ export function PromptSelector({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newPromptName, setNewPromptName] = useState('');
   const [newPromptContent, setNewPromptContent] = useState('');
+  const [editPromptId, setEditPromptId] = useState('');
+  const [editPromptName, setEditPromptName] = useState('');
+  const [editPromptContent, setEditPromptContent] = useState('');
 
   const loadPrompts = async () => {
     setIsLoading(true);
@@ -112,6 +116,40 @@ export function PromptSelector({
     }
   };
 
+  const handleEditPrompt = async () => {
+    if (!editPromptName.trim() || !editPromptContent.trim()) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/prompts', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editPromptId,
+          name: editPromptName,
+          prompt: editPromptContent,
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update prompt');
+      
+      setIsEditDialogOpen(false);
+      await loadPrompts();
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to update prompt:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openEditDialog = (prompt: Prompt) => {
+    setEditPromptId(prompt.id);
+    setEditPromptName(prompt.name);
+    setEditPromptContent(prompt.prompt);
+    setIsEditDialogOpen(true);
+  };
+
   const handleDeletePrompt = async (id: string) => {
     setIsLoading(true);
     try {
@@ -163,16 +201,28 @@ export function PromptSelector({
                     <span className={prompt.id === selectedPromptId ? "font-bold" : ""}>
                       {prompt.name}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeletePrompt(prompt.id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditDialog(prompt);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePrompt(prompt.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </DropdownMenuItem>
                 ))
               ) : (
@@ -190,6 +240,7 @@ export function PromptSelector({
         </DropdownMenuContent>
       </DropdownMenu>
 
+      {/* Create Prompt Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -225,6 +276,45 @@ export function PromptSelector({
             </Button>
             <Button onClick={handleCreatePrompt} disabled={isLoading}>
               {isLoading ? 'Creating...' : 'Create Prompt'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Prompt Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Prompt</DialogTitle>
+            <DialogDescription>
+              Make changes to your prompt template
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="edit-name">Name</label>
+              <Input
+                id="edit-name"
+                value={editPromptName}
+                onChange={(e) => setEditPromptName(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="edit-prompt">Prompt Template</label>
+              <Textarea
+                id="edit-prompt"
+                value={editPromptContent}
+                onChange={(e) => setEditPromptContent(e.target.value)}
+                className="min-h-[150px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditPrompt} disabled={isLoading}>
+              {isLoading ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </DialogContent>
