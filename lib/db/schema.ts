@@ -30,7 +30,6 @@ export const chat = pgTable("Chat", {
     .notNull()
     .default("private"),
   promptId: uuid("promptId")
-    .notNull()
     .references(() => prompts.id),
 });
 

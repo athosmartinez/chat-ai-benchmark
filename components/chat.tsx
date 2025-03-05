@@ -17,12 +17,14 @@ export function Chat({
   selectedChatModel,
   selectedVisibilityType,
   isReadonly,
+  promptId
 }: {
   id: string;
   initialMessages: Array<Message>;
   selectedChatModel: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
+  promptId?: string | null;
 }) {
   const { mutate } = useSWRConfig();
 
@@ -65,7 +67,7 @@ export function Chat({
           chatId={id}
           selectedModelId={selectedChatModel}
           selectedVisibilityType={selectedVisibilityType}
-          isReadonly={isReadonly} userId={''} selectedPromptId={''}        />
+          isReadonly={isReadonly} userId={''} selectedPromptId={''} selectedPrompt={null}        />
 
        
         <div className="flex-1 flex flex-col md:flex-row gap-4 p-4 overflow-y-auto">
