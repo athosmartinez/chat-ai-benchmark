@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Edit } from 'lucide-react';
+import { useState, useEffect, startTransition, useOptimistic } from "react";
+import { useRouter } from "next/navigation";
+import { Plus, Trash2, Edit, ChevronDown } from "lucide-react";
 
-import { Button } from './ui/button';
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,21 +12,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from './ui/dialog';
+} from "./ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from './ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from './ui/tooltip';
+} from "./ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { savePromptIdAsCookie } from "@/app/(chat)/actions";
+import { CheckCircleFillIcon } from "./icons";
 
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+
+// Variável global para persistir o prompt selecionado
+let persistedSelectedPrompt: Prompt | null = null;
 
 export type Prompt = {
   id: string;
@@ -51,66 +52,91 @@ export function PromptSelector({
 }: PromptSelectorProps) {
   const router = useRouter();
   const [prompts, setPrompts] = useState<Prompt[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [optimisticPromptId, setOptimisticPromptId] = useOptimistic(
+    persistedSelectedPrompt?.id || selectedPromptId
+  );
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [newPromptName, setNewPromptName] = useState('');
-  const [newPromptContent, setNewPromptContent] = useState('');
-  const [editPromptId, setEditPromptId] = useState('');
-  const [editPromptName, setEditPromptName] = useState('');
-  const [editPromptContent, setEditPromptContent] = useState('');
+  const [newPromptName, setNewPromptName] = useState("");
+  const [newPromptContent, setNewPromptContent] = useState("");
+  const [editPromptId, setEditPromptId] = useState("");
+  const [editPromptName, setEditPromptName] = useState("");
+  const [editPromptContent, setEditPromptContent] = useState("");
+
+  const currentSelectedPrompt = prompts.find((p) => p.id === optimisticPromptId) || persistedSelectedPrompt;
+
+  useEffect(() => {
+    loadPrompts();
+  }, []);
+
+  useEffect(() => {
+    if (selectedPromptId && prompts.length > 0) {
+      const selected = prompts.find((p) => p.id === selectedPromptId);
+      if (selected) {
+        persistedSelectedPrompt = selected;
+        setOptimisticPromptId(selected.id);
+      }
+    }
+  }, [selectedPromptId, prompts]);
 
   const loadPrompts = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/prompts');
-      if (!response.ok) throw new Error('Failed to fetch prompts');
-      
+      const response = await fetch("/api/prompts");
+      if (!response.ok) throw new Error("Failed to fetch prompts");
+
       const promptsData = await response.json();
       setPrompts(promptsData);
-      
-      if (selectedPromptId) {
+
+      if (selectedPromptId && !persistedSelectedPrompt) {
         const selected = promptsData.find((p: Prompt) => p.id === selectedPromptId);
-        setSelectedPrompt(selected || null);
+        if (selected) {
+          persistedSelectedPrompt = selected;
+          setOptimisticPromptId(selected.id);
+        }
       }
     } catch (error) {
-      console.error('Failed to load prompts:', error);
+      console.error("Failed to load prompts:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (selectedPromptId) {
-      const selected = prompts.find(p => p.id === selectedPromptId);
-      setSelectedPrompt(selected || null);
-    }
-  }, [selectedPromptId, prompts]);
+  const handleSelectPrompt = (prompt: Prompt) => {
+    setOpen(false);
+    startTransition(() => {
+      persistedSelectedPrompt = prompt;
+      setOptimisticPromptId(prompt.id);
+      onPromptSelect(prompt.id);
+      savePromptIdAsCookie(prompt.id);
+    });
+  };
 
   const handleCreatePrompt = async () => {
     if (!newPromptName.trim() || !newPromptContent.trim()) return;
-    
+
     setIsLoading(true);
     try {
-      const response = await fetch('/api/prompts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/prompts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: newPromptName,
           prompt: newPromptContent,
         }),
       });
-      
-      if (!response.ok) throw new Error('Failed to create prompt');
-      
-      setNewPromptName('');
-      setNewPromptContent('');
+
+      if (!response.ok) throw new Error("Failed to create prompt");
+
+      setNewPromptName("");
+      setNewPromptContent("");
       setIsCreateDialogOpen(false);
       await loadPrompts();
       router.refresh();
     } catch (error) {
-      console.error('Failed to create prompt:', error);
+      console.error("Failed to create prompt:", error);
     } finally {
       setIsLoading(false);
     }
@@ -118,26 +144,26 @@ export function PromptSelector({
 
   const handleEditPrompt = async () => {
     if (!editPromptName.trim() || !editPromptContent.trim()) return;
-    
+
     setIsLoading(true);
     try {
-      const response = await fetch('/api/prompts', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/prompts", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: editPromptId,
           name: editPromptName,
           prompt: editPromptContent,
         }),
       });
-      
-      if (!response.ok) throw new Error('Failed to update prompt');
-      
+
+      if (!response.ok) throw new Error("Failed to update prompt");
+
       setIsEditDialogOpen(false);
       await loadPrompts();
       router.refresh();
     } catch (error) {
-      console.error('Failed to update prompt:', error);
+      console.error("Failed to update prompt:", error);
     } finally {
       setIsLoading(false);
     }
@@ -154,39 +180,40 @@ export function PromptSelector({
     setIsLoading(true);
     try {
       const response = await fetch(`/api/prompts?id=${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
-      
-      if (!response.ok) throw new Error('Failed to delete prompt');
-      
+
+      if (!response.ok) throw new Error("Failed to delete prompt");
+
       await loadPrompts();
+      if (persistedSelectedPrompt?.id === id) {
+        persistedSelectedPrompt = null;
+        setOptimisticPromptId("");
+      }
       router.refresh();
     } catch (error) {
-      console.error('Failed to delete prompt:', error);
+      console.error("Failed to delete prompt:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSelectPrompt = (promptId: string) => {
-    onPromptSelect(promptId);
-    const selected = prompts.find(p => p.id === promptId);
-    setSelectedPrompt(selected || null);
-  };
-
   return (
     <div className={className}>
-      <DropdownMenu onOpenChange={loadPrompts}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-8 px-2">
-                {selectedPrompt?.name || 'Select Prompt'}
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-        </Tooltip>
-        <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenuTrigger
+          asChild
+          className={cn(
+            "w-fit data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
+            className
+          )}
+        >
+          <Button variant="outline" className="md:px-2 md:h-[34px]">
+            {currentSelectedPrompt?.name || "Select prompt"}
+            <ChevronDown className="ml-1 h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="min-w-[300px]">
           {isLoading ? (
             <DropdownMenuItem disabled>Loading...</DropdownMenuItem>
           ) : (
@@ -195,13 +222,17 @@ export function PromptSelector({
                 prompts.map((prompt) => (
                   <DropdownMenuItem
                     key={prompt.id}
-                    className="flex justify-between items-center"
-                    onClick={() => handleSelectPrompt(prompt.id)}
+                    onSelect={() => handleSelectPrompt(prompt)}
+                    className="gap-4 group/item flex flex-row justify-between items-center"
+                    data-active={prompt.id === optimisticPromptId}
                   >
-                    <span className={prompt.id === selectedPromptId ? "font-bold" : ""}>
-                      {prompt.name}
-                    </span>
-                    <div className="flex">
+                    <div className="flex flex-col gap-1 items-start">
+                      <div>{prompt.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {prompt.prompt.slice(0, 50)}...
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -222,13 +253,16 @@ export function PromptSelector({
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
+                      <div className="text-foreground dark:text-foreground opacity-0 group-data-[active=true]/item:opacity-100">
+                        <CheckCircleFillIcon />
+                      </div>
                     </div>
                   </DropdownMenuItem>
                 ))
               ) : (
                 <DropdownMenuItem disabled>No prompts found</DropdownMenuItem>
               )}
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className="justify-center text-primary"
                 onClick={() => setIsCreateDialogOpen(true)}
               >
@@ -271,11 +305,14 @@ export function PromptSelector({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button onClick={handleCreatePrompt} disabled={isLoading}>
-              {isLoading ? 'Creating...' : 'Create Prompt'}
+              {isLoading ? "Creating..." : "Create Prompt"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -310,11 +347,14 @@ export function PromptSelector({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button onClick={handleEditPrompt} disabled={isLoading}>
-              {isLoading ? 'Saving...' : 'Save Changes'}
+              {isLoading ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>

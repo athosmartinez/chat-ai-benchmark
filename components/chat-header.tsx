@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useWindowSize } from 'usehooks-ts';
-import { memo } from 'react';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useWindowSize } from "usehooks-ts";
+import { memo } from "react";
 
-import { ModelSelector } from '@/components/model-selector';
-import { SidebarToggle } from '@/components/sidebar-toggle';
-import { Button } from '@/components/ui/button';
-import { PlusIcon, VercelIcon } from './icons';
-import { useSidebar } from './ui/sidebar';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { VisibilityType, VisibilitySelector } from './visibility-selector';
-import { PromptSelector } from './prompt-selector';
+import { ModelSelector } from "@/components/model-selector";
+import { SidebarToggle } from "@/components/sidebar-toggle";
+import { Button } from "@/components/ui/button";
+import { PlusIcon, VercelIcon } from "./icons";
+import { useSidebar } from "./ui/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { VisibilityType, VisibilitySelector } from "./visibility-selector";
+import { Prompt, PromptSelector } from "./prompt-selector";
 
 function PureChatHeader({
   chatId,
@@ -53,7 +53,7 @@ function PureChatHeader({
               variant="outline"
               className="order-2 md:order-1 md:px-2 px-2 md:h-fit ml-auto md:ml-0"
               onClick={() => {
-                router.push('/');
+                router.push("/");
                 router.refresh();
               }}
             >
@@ -81,7 +81,7 @@ function PureChatHeader({
       )}
 
       {!isReadonly && (
-        <PromptSelector 
+        <PromptSelector
           userId={userId}
           selectedPromptId={selectedPromptId}
           onPromptSelect={handlePromptChange}
@@ -93,7 +93,9 @@ function PureChatHeader({
 }
 
 export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
-  return prevProps.selectedModelId === nextProps.selectedModelId &&
-         prevProps.selectedPromptId === nextProps.selectedPromptId &&
-         prevProps.selectedVisibilityType === nextProps.selectedVisibilityType;
+  return (
+    prevProps.selectedModelId === nextProps.selectedModelId &&
+    prevProps.selectedPromptId === nextProps.selectedPromptId &&
+    prevProps.selectedVisibilityType === nextProps.selectedVisibilityType
+  );
 });
