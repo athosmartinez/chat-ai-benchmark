@@ -53,7 +53,6 @@ export async function POST(request: Request) {
 
   if (!chat) {
     const title = await generateTitleFromUserMessage({ message: userMessage });
-    // TO-DO: Add promptId
     await saveChat({ id, userId: session.user.id, title, promptId: selectedPromptId });
   }
 
