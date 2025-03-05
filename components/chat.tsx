@@ -65,8 +65,7 @@ export function Chat({
           chatId={id}
           selectedModelId={selectedChatModel}
           selectedVisibilityType={selectedVisibilityType}
-          isReadonly={isReadonly}
-        />
+          isReadonly={isReadonly} userId={''} selectedPromptId={''}        />
 
        
         <div className="flex-1 flex flex-col md:flex-row gap-4 p-4 overflow-y-auto">
