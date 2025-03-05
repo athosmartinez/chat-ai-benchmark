@@ -20,14 +20,16 @@ function PureChatHeader({
   selectedModelId,
   selectedVisibilityType,
   selectedPromptId,
+  selectedPrompt,
   isReadonly,
   onPromptChange,
 }: {
   chatId: string;
-  userId: string;
+  userId: string | null;
   selectedModelId: string;
   selectedVisibilityType: VisibilityType;
-  selectedPromptId: string;
+  selectedPromptId: string | null;
+  selectedPrompt?: Prompt | null;
   isReadonly: boolean;
   onPromptChange?: (promptId: string) => void;
 }) {

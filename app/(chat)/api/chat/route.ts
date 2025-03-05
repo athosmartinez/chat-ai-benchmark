@@ -33,7 +33,8 @@ export async function POST(request: Request) {
     id,
     messages,
     selectedChatModel,
-  }: { id: string; messages: Array<Message>; selectedChatModel: string } =
+    selectedPromptId,
+  }: { id: string; messages: Array<Message>; selectedChatModel: string, selectedPromptId: string } =
     await request.json();
 
   const session = await auth();
@@ -52,8 +53,7 @@ export async function POST(request: Request) {
 
   if (!chat) {
     const title = await generateTitleFromUserMessage({ message: userMessage });
-    // TO-DO: Add promptId
-    await saveChat({ id, userId: session.user.id, title, promptId: null });
+    await saveChat({ id, userId: session.user.id, title, promptId: selectedPromptId });
   }
 
   await saveMessages({

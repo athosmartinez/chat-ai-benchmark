@@ -38,14 +38,13 @@ export type Prompt = {
 };
 
 interface PromptSelectorProps {
-  userId: string;
-  selectedPromptId: string;
+  userId?: string | null;
+  selectedPromptId?: string | null;
   className?: string;
   onPromptSelect: (promptId: string) => void;
 }
 
 export function PromptSelector({
-  userId,
   selectedPromptId,
   className,
   onPromptSelect,
@@ -66,6 +65,13 @@ export function PromptSelector({
   const [editPromptContent, setEditPromptContent] = useState("");
 
   const currentSelectedPrompt = prompts.find((p) => p.id === optimisticPromptId) || persistedSelectedPrompt;
+
+  // Função para ler o cookie prompt-id
+  const getPromptIdFromCookie = () => {
+    const cookies = document.cookie.split("; ");
+    const promptCookie = cookies.find((cookie) => cookie.startsWith("prompt-id="));
+    return promptCookie ? promptCookie.split("=")[1] : null;
+  };
 
   useEffect(() => {
     loadPrompts();
@@ -90,11 +96,17 @@ export function PromptSelector({
       const promptsData = await response.json();
       setPrompts(promptsData);
 
-      if (selectedPromptId && !persistedSelectedPrompt) {
-        const selected = promptsData.find((p: Prompt) => p.id === selectedPromptId);
-        if (selected) {
-          persistedSelectedPrompt = selected;
-          setOptimisticPromptId(selected.id);
+      // Tenta selecionar o prompt do cookie primeiro
+      const cookiePromptId = getPromptIdFromCookie();
+      if (cookiePromptId && !persistedSelectedPrompt) {
+        const selectedFromCookie = promptsData.find((p: Prompt) => p.id === cookiePromptId);
+        if (selectedFromCookie) {
+          startTransition(() => {
+            persistedSelectedPrompt = selectedFromCookie;
+            setOptimisticPromptId(selectedFromCookie.id);
+            onPromptSelect(selectedFromCookie.id);
+            savePromptIdAsCookie(selectedFromCookie.id); // Garante que o cookie esteja atualizado
+          });
         }
       }
     } catch (error) {
@@ -130,10 +142,21 @@ export function PromptSelector({
 
       if (!response.ok) throw new Error("Failed to create prompt");
 
+      const newPrompt = await response.json(); // Assume que a API retorna o prompt criado
+
       setNewPromptName("");
       setNewPromptContent("");
       setIsCreateDialogOpen(false);
       await loadPrompts();
+
+      // Seleciona o prompt recém-criado automaticamente
+      startTransition(() => {
+        persistedSelectedPrompt = newPrompt;
+        setOptimisticPromptId(newPrompt.id);
+        onPromptSelect(newPrompt.id);
+        savePromptIdAsCookie(newPrompt.id);
+      });
+
       router.refresh();
     } catch (error) {
       console.error("Failed to create prompt:", error);

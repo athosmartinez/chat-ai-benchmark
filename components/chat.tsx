@@ -22,14 +22,14 @@ export function Chat({
   selectedChatModel,
   selectedVisibilityType,
   isReadonly,
-  promptId
+  selectedPromptId
 }: {
   id: string;
   initialMessages: Array<Message>;
   selectedChatModel: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
-  promptId?: string | null;
+  selectedPromptId?: string | null;
 }) {
   const { mutate } = useSWRConfig();
 
@@ -45,7 +45,7 @@ export function Chat({
     reload,
   } = useChat({
     id,
-    body: { id, selectedChatModel: selectedChatModel },
+    body: { id, selectedChatModel: selectedChatModel, selectedPromptId: selectedPromptId },
     initialMessages,
     experimental_throttle: 100,
     sendExtraMessageFields: true,
@@ -73,7 +73,7 @@ export function Chat({
           chatId={id}
           selectedModelId={selectedChatModel}
           selectedVisibilityType={selectedVisibilityType}
-          isReadonly={isReadonly} userId={''} selectedPromptId={''} selectedPrompt={null}        />
+          isReadonly={isReadonly} userId={null} selectedPromptId={null}       />
 
         <Messages
           chatId={id}
