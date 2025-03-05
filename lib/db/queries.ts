@@ -57,7 +57,7 @@ export async function saveChat({
   id: string;
   userId: string;
   title: string;
-  promptId: string;
+  promptId?: string | null;
 }) {
   try {
     return await db.insert(chat).values({
@@ -65,7 +65,7 @@ export async function saveChat({
       createdAt: new Date(),
       userId,
       title,
-      promptId,
+      promptId: promptId || null,
     });
   } catch (error) {
     console.error("Failed to save chat in database");
@@ -391,7 +391,10 @@ export async function getPrompts({ userId }: { userId: string }) {
 
 export async function getPromptById({ id }: { id: string }) {
   try {
-    const [selectedPrompt] = await db.select().from(prompts).where(eq(prompts.id, id));
+    const [selectedPrompt] = await db
+      .select()
+      .from(prompts)
+      .where(eq(prompts.id, id));
     return selectedPrompt || null;
   } catch (error) {
     console.error("Failed to get prompt by id from database");
@@ -402,7 +405,7 @@ export async function getPromptById({ id }: { id: string }) {
 export async function updatePrompt({
   id,
   name,
-  prompt
+  prompt,
 }: {
   id: string;
   name?: string;
@@ -412,13 +415,11 @@ export async function updatePrompt({
     const updateData: Record<string, any> = {};
     if (name !== undefined) updateData.name = name;
     if (prompt !== undefined) updateData.prompt = prompt;
-    
+
     if (Object.keys(updateData).length === 0) return null;
-    
-    await db.update(prompts)
-      .set(updateData)
-      .where(eq(prompts.id, id));
-      
+
+    await db.update(prompts).set(updateData).where(eq(prompts.id, id));
+
     return getPromptById({ id });
   } catch (error) {
     console.error("Failed to update prompt in database");

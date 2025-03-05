@@ -16,7 +16,7 @@ export const myProvider = customProvider({
   languageModels: {
     'chat-model-openai-mini': openai('gpt-4o-mini'),
     'chat-model-openai-default': openai('gpt-4o'),
-    'chat-model-perplexity': perplexity('sonar-prot'),
+    // 'chat-model-perplexity': perplexity('sonar-pro'),
     'chat-model-google': google('gemini-2.0-flash'),
     'chat-model-xai': xai('grok-2-1212'),
     'chat-model-deepseek': deepseek('deepseek-chat'),
@@ -50,11 +50,11 @@ export const chatModels: Array<ChatModel> = [
     name: 'openai - gpt-4o',
     description: '',
   },
-  {
-    id: 'chat-model-perplexity',
-    name: 'perplexity - sonar-pro',
-    description: '',
-  },
+  // {
+  //   id: 'chat-model-perplexity',
+  //   name: 'perplexity - sonar-pro',
+  //   description: '',
+  // },
   {
     id: 'chat-model-google',
     name: 'google gemini - gemini-2.0-flash',
