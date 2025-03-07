@@ -73,6 +73,11 @@ export function PromptSelector({
     return promptCookie ? promptCookie.split("=")[1] : null;
   };
 
+  // Função para remover o cookie prompt-id
+  const removePromptIdCookie = () => {
+    document.cookie = "prompt-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  };
+
   useEffect(() => {
     loadPrompts();
   }, []);
@@ -210,8 +215,11 @@ export function PromptSelector({
 
       await loadPrompts();
       if (persistedSelectedPrompt?.id === id) {
-        persistedSelectedPrompt = null;
-        setOptimisticPromptId("");
+        startTransition(() => {
+          persistedSelectedPrompt = null;
+          setOptimisticPromptId(""); // Movido para dentro do startTransition
+          removePromptIdCookie(); // Remove o cookie se o prompt deletado era o selecionado
+        });
       }
       router.refresh();
     } catch (error) {
