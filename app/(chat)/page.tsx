@@ -10,6 +10,7 @@ export default async function Page() {
 
   const cookieStore = await cookies();
   const modelIdFromCookie = cookieStore.get('chat-model');
+  const promptIdFromCookie = cookieStore.get('prompt-id');
 
   if (!modelIdFromCookie) {
     return (
@@ -19,6 +20,7 @@ export default async function Page() {
           id={id}
           initialMessages={[]}
           selectedChatModel={DEFAULT_CHAT_MODEL}
+          selectedPromptId={promptIdFromCookie?.value}
           selectedVisibilityType="private"
           isReadonly={false}
         />
@@ -34,6 +36,7 @@ export default async function Page() {
         id={id}
         initialMessages={[]}
         selectedChatModel={modelIdFromCookie.value}
+        selectedPromptId={promptIdFromCookie?.value}
         selectedVisibilityType="private"
         isReadonly={false}
       />

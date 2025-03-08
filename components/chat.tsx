@@ -17,14 +17,14 @@ export function Chat({
   selectedChatModel,
   selectedVisibilityType,
   isReadonly,
-  promptId
+  selectedPromptId
 }: {
   id: string;
   initialMessages: Array<Message>;
   selectedChatModel: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
-  promptId?: string | null;
+  selectedPromptId?: string | null;
 }) {
   const { mutate } = useSWRConfig();
 
@@ -40,7 +40,7 @@ export function Chat({
     reload,
   } = useChat({
     id,
-    body: { id, selectedChatModel: selectedChatModel },
+    body: { id, selectedChatModel: selectedChatModel, selectedPromptId: selectedPromptId },
     initialMessages,
     experimental_throttle: 100,
     sendExtraMessageFields: true,
@@ -49,7 +49,7 @@ export function Chat({
       mutate('/api/history');
     },
     onError: (error) => {
-      toast.error('An error occurred, please try again!');
+      toast.error(error.message ?? 'An error occurred, please try again later');
     },
   });
 
@@ -67,7 +67,7 @@ export function Chat({
           chatId={id}
           selectedModelId={selectedChatModel}
           selectedVisibilityType={selectedVisibilityType}
-          isReadonly={isReadonly} userId={''} selectedPromptId={''} selectedPrompt={null}        />
+          isReadonly={isReadonly} userId={null} selectedPromptId={null}       />
 
        
         <div className="flex-1 flex flex-col md:flex-row gap-4 p-4 overflow-y-auto">
