@@ -45,6 +45,8 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
 
   // References to chat instances
   const chatRefs = useRef<{ [key: string]: any }>({});
+  // Reference for chat containers to sync scrolling
+  const chatContainersRef = useRef<HTMLDivElement>(null);
 
   // Handle prompt selection from any chat instance
   const handlePromptChange = (promptId: string) => {
@@ -73,12 +75,31 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
     }
 
     startTransition(() => {
-      const newChatInstances = selectedModels.map((modelId) => ({
-        id: generateUUID(),
-        modelId,
-      }));
-
-      setChatInstances(newChatInstances);
+      // Check if we already have chat instances and messages
+      if (chatInstances.length > 0 && messages.length > 0) {
+        // Create a new benchmark by resetting everything first
+        setChatInstances([]);
+        setInput("");
+        setAttachments([]);
+        setMessages([]);
+        
+        // Then add the new chat instances after a short delay to ensure state is updated
+        setTimeout(() => {
+          const newChatInstances = selectedModels.map((modelId) => ({
+            id: generateUUID(),
+            modelId,
+          }));
+          setChatInstances(newChatInstances);
+        }, 100);
+      } else {
+        // Just add the selected models to the current benchmark
+        const newChatInstances = selectedModels.map((modelId) => ({
+          id: generateUUID(),
+          modelId,
+        }));
+        setChatInstances(newChatInstances);
+      }
+      
       setIsDialogOpen(false);
     });
   };
@@ -166,15 +187,36 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
     chatRefs.current[id] = methods;
   };
 
+  // Sync scrolling between chat instances
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!chatContainersRef.current) return;
+    
+    const scrolledContainer = e.currentTarget;
+    const scrollTop = scrolledContainer.scrollTop;
+    
+    // Get all chat containers
+    const chatContainers = chatContainersRef.current.querySelectorAll('.chat-container');
+    
+    // Sync scroll position for all containers except the one being scrolled
+    chatContainers.forEach((container) => {
+      if (container !== scrolledContainer && container instanceof HTMLElement) {
+        container.scrollTop = scrollTop;
+      }
+    });
+  };
+
   // Dummy append function for the shared input
   const dummyAppend = async () => {
     return null;
   };
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full h-screen overflow-hidden">
       <div className="flex justify-between items-center p-2 bg-background sticky top-0 z-10 border-b">
-        <h2 className="text-lg font-semibold">AI Model Benchmark</h2>
+        <h2 className="text-lg font-semibold flex items-center">
+          <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text mr-1">AI</span>
+          <span>Benchmark</span>
+        </h2>
         <div className="flex gap-2 items-center">
           {/* Shared prompt selector */}
           {chatInstances.length > 0 && (
@@ -189,20 +231,24 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
           <Button
             variant="outline"
             onClick={() => setIsDialogOpen(true)}
-            disabled={chatInstances.length > 0}
+            className="md:px-2 md:h-[34px]"
           >
-            Select Models
+            {chatInstances.length > 0 ? "Change Models" : "Select Models"}
           </Button>
           {chatInstances.length > 0 && (
-            <Button variant="destructive" onClick={resetBenchmark}>
-              Reset Benchmark
+            <Button 
+              variant="outline" 
+              onClick={resetBenchmark}
+              className="md:px-2 md:h-[34px]"
+            >
+              Reset
             </Button>
           )}
         </div>
       </div>
 
       {chatInstances.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-[calc(100vh-120px)] gap-4">
+        <div className="flex flex-col items-center justify-center h-full gap-4">
           <p className="text-muted-foreground">
             Select models to start benchmarking
           </p>
@@ -211,7 +257,8 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
       ) : (
         <>
           <div
-            className={`grid gap-1 p-1 h-[calc(100vh-140px)] overflow-hidden`}
+            ref={chatContainersRef}
+            className="grid gap-1 p-1 flex-1 overflow-hidden"
             style={{
               gridTemplateColumns: `repeat(${Math.min(
                 chatInstances.length,
@@ -224,7 +271,8 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
             {chatInstances.map((chat) => (
               <div
                 key={chat.id}
-                className="border rounded overflow-hidden h-full"
+                className="border rounded overflow-hidden h-full chat-container"
+                onScroll={handleScroll}
               >
                 <Chat
                   id={chat.id}
@@ -250,7 +298,6 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
               className="flex mx-auto gap-2 w-full md:max-w-3xl"
             >
               <MultimodalInput
-                chatId="shared"
                 input={input}
                 setInput={setInput}
                 handleSubmit={handleSharedSubmit}
