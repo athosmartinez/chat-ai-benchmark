@@ -4,6 +4,7 @@ import { Chat } from '@/components/chat';
 import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 import { generateUUID } from '@/lib/utils';
 import { DataStreamHandler } from '@/components/data-stream-handler';
+import { Benchmark } from '@/components/benchmark';
 
 export default async function Page() {
   const id = generateUUID();
@@ -11,34 +12,12 @@ export default async function Page() {
   const cookieStore = await cookies();
   const modelIdFromCookie = cookieStore.get('chat-model');
   const promptIdFromCookie = cookieStore.get('prompt-id');
-
-  if (!modelIdFromCookie) {
-    return (
-      <>
-        <Chat
-          key={id}
-          id={id}
-          initialMessages={[]}
-          selectedChatModel={DEFAULT_CHAT_MODEL}
-          selectedPromptId={promptIdFromCookie?.value}
-          selectedVisibilityType="private"
-          isReadonly={false}
-        />
-        <DataStreamHandler id={id} />
-      </>
-    );
-  }
-
+  
+  // Use the Benchmark component instead of a single Chat
   return (
     <>
-      <Chat
-        key={id}
-        id={id}
-        initialMessages={[]}
-        selectedChatModel={modelIdFromCookie.value}
-        selectedPromptId={promptIdFromCookie?.value}
-        selectedVisibilityType="private"
-        isReadonly={false}
+      <Benchmark 
+        initialPromptId={promptIdFromCookie?.value}
       />
       <DataStreamHandler id={id} />
     </>

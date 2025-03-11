@@ -48,7 +48,6 @@ import {
 } from '@/components/ui/sidebar';
 import type { Chat } from '@/lib/db/schema';
 import { fetcher } from '@/lib/utils';
-import { useChatVisibility } from '@/hooks/use-chat-visibility';
 
 type GroupedChats = {
   today: Chat[];
@@ -69,10 +68,6 @@ const PureChatItem = ({
   onDelete: (chatId: string) => void;
   setOpenMobile: (open: boolean) => void;
 }) => {
-  const { visibilityType, setVisibilityType } = useChatVisibility({
-    chatId: chat.id,
-    initialVisibility: chat.visibility,
-  });
 
   return (
     <SidebarMenuItem>
@@ -103,29 +98,19 @@ const PureChatItem = ({
               <DropdownMenuSubContent>
                 <DropdownMenuItem
                   className="cursor-pointer flex-row justify-between"
-                  onClick={() => {
-                    setVisibilityType('private');
-                  }}
                 >
                   <div className="flex flex-row gap-2 items-center">
                     <LockIcon size={12} />
                     <span>Private</span>
                   </div>
-                  {visibilityType === 'private' ? (
-                    <CheckCircleFillIcon />
-                  ) : null}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer flex-row justify-between"
-                  onClick={() => {
-                    setVisibilityType('public');
-                  }}
                 >
                   <div className="flex flex-row gap-2 items-center">
                     <GlobeIcon />
                     <span>Public</span>
                   </div>
-                  {visibilityType === 'public' ? <CheckCircleFillIcon /> : null}
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>

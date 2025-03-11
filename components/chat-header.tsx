@@ -11,27 +11,27 @@ import { Button } from "@/components/ui/button";
 import { PlusIcon, VercelIcon } from "./icons";
 import { useSidebar } from "./ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { VisibilityType, VisibilitySelector } from "./visibility-selector";
 import { Prompt, PromptSelector } from "./prompt-selector";
+import { chatModels } from "../lib/ai/models";
 
 function PureChatHeader({
   chatId,
   userId,
   selectedModelId,
-  selectedVisibilityType,
   selectedPromptId,
   selectedPrompt,
   isReadonly,
   onPromptChange,
+  isBenchmark = false
 }: {
   chatId: string;
   userId: string | null;
   selectedModelId: string;
-  selectedVisibilityType: VisibilityType;
   selectedPromptId: string | null;
   selectedPrompt?: Prompt | null;
   isReadonly: boolean;
   onPromptChange?: (promptId: string) => void;
+  isBenchmark?: boolean;
 }) {
   const router = useRouter();
   const { open } = useSidebar();
@@ -44,11 +44,14 @@ function PureChatHeader({
     }
   };
 
+  // Find the selected model to display its name
+  const selectedModel = chatModels.find(model => model.id === selectedModelId);
+
   return (
     <header className="flex sticky top-0 bg-background py-1.5 items-center px-2 md:px-2 gap-2">
-      <SidebarToggle />
+      {!isBenchmark && <SidebarToggle />}
 
-      {(!open || windowWidth < 768) && (
+      {!isBenchmark && (!open || windowWidth < 768) && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -67,28 +70,29 @@ function PureChatHeader({
         </Tooltip>
       )}
 
-      {!isReadonly && (
-        <ModelSelector
-          selectedModelId={selectedModelId}
-          className="order-1 md:order-2"
-        />
-      )}
+      {/* For benchmark mode, just display the model name */}
+      {isBenchmark ? (
+        <div className="text-sm font-medium flex-1 px-2 py-1 bg-muted rounded-md">
+          {selectedModel?.name || selectedModelId}
+        </div>
+      ) : (
+        <>
+          {!isReadonly && (
+            <ModelSelector
+              selectedModelId={selectedModelId}
+              className="order-1 md:order-2"
+            />
+          )}
 
-      {!isReadonly && (
-        <VisibilitySelector
-          chatId={chatId}
-          selectedVisibilityType={selectedVisibilityType}
-          className="order-1 md:order-3"
-        />
-      )}
-
-      {!isReadonly && (
-        <PromptSelector
-          userId={userId}
-          selectedPromptId={selectedPromptId}
-          onPromptSelect={handlePromptChange}
-          className="order-1 md:order-4"
-        />
+          {!isReadonly && (
+            <PromptSelector
+              userId={userId}
+              selectedPromptId={selectedPromptId}
+              onPromptSelect={handlePromptChange}
+              className="order-1 md:order-4"
+            />
+          )}
+        </>
       )}
     </header>
   );
@@ -97,7 +101,6 @@ function PureChatHeader({
 export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
   return (
     prevProps.selectedModelId === nextProps.selectedModelId &&
-    prevProps.selectedPromptId === nextProps.selectedPromptId &&
-    prevProps.selectedVisibilityType === nextProps.selectedVisibilityType
+    prevProps.selectedPromptId === nextProps.selectedPromptId
   );
 });

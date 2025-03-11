@@ -53,9 +53,9 @@ export function PromptSelector({
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [optimisticPromptId, setOptimisticPromptId] = useOptimistic(
-    persistedSelectedPrompt?.id || selectedPromptId
-  );
+  const [optimisticPromptId, setOptimisticPromptId] = useOptimistic<
+    string | null
+  >(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newPromptName, setNewPromptName] = useState("");
@@ -64,19 +64,31 @@ export function PromptSelector({
   const [editPromptName, setEditPromptName] = useState("");
   const [editPromptContent, setEditPromptContent] = useState("");
 
-  const currentSelectedPrompt = prompts.find((p) => p.id === optimisticPromptId) || persistedSelectedPrompt;
+  const currentSelectedPrompt =
+    prompts.find((p) => p.id === optimisticPromptId) || persistedSelectedPrompt;
 
   // Função para ler o cookie prompt-id
   const getPromptIdFromCookie = () => {
     const cookies = document.cookie.split("; ");
-    const promptCookie = cookies.find((cookie) => cookie.startsWith("prompt-id="));
+    const promptCookie = cookies.find((cookie) =>
+      cookie.startsWith("prompt-id=")
+    );
     return promptCookie ? promptCookie.split("=")[1] : null;
   };
 
   // Função para remover o cookie prompt-id
   const removePromptIdCookie = () => {
-    document.cookie = "prompt-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie =
+      "prompt-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   };
+
+  useEffect(() => {
+    startTransition(() => {
+      setOptimisticPromptId(
+        persistedSelectedPrompt?.id || selectedPromptId || null
+      );
+    });
+  }, [selectedPromptId]);
 
   useEffect(() => {
     loadPrompts();
@@ -86,8 +98,10 @@ export function PromptSelector({
     if (selectedPromptId && prompts.length > 0) {
       const selected = prompts.find((p) => p.id === selectedPromptId);
       if (selected) {
-        persistedSelectedPrompt = selected;
-        setOptimisticPromptId(selected.id);
+        startTransition(() => {
+          persistedSelectedPrompt = selected;
+          setOptimisticPromptId(selected.id);
+        });
       }
     }
   }, [selectedPromptId, prompts]);
@@ -104,7 +118,9 @@ export function PromptSelector({
       // Tenta selecionar o prompt do cookie primeiro
       const cookiePromptId = getPromptIdFromCookie();
       if (cookiePromptId && !persistedSelectedPrompt) {
-        const selectedFromCookie = promptsData.find((p: Prompt) => p.id === cookiePromptId);
+        const selectedFromCookie = promptsData.find(
+          (p: Prompt) => p.id === cookiePromptId
+        );
         if (selectedFromCookie) {
           startTransition(() => {
             persistedSelectedPrompt = selectedFromCookie;
@@ -214,13 +230,16 @@ export function PromptSelector({
       if (!response.ok) throw new Error("Failed to delete prompt");
 
       await loadPrompts();
+
+      // The issue is fixed here - wrapping the optimistic state update in startTransition
       if (persistedSelectedPrompt?.id === id) {
         startTransition(() => {
           persistedSelectedPrompt = null;
-          setOptimisticPromptId(""); // Movido para dentro do startTransition
+          setOptimisticPromptId(null); // Changed from empty string to null for consistency
           removePromptIdCookie(); // Remove o cookie se o prompt deletado era o selecionado
         });
       }
+
       router.refresh();
     } catch (error) {
       console.error("Failed to delete prompt:", error);
