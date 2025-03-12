@@ -36,6 +36,7 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(
     initialPromptId || null
   );
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
   // Shared input state
   const [input, setInput] = useState<string>("");
@@ -111,6 +112,7 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
       setInput("");
       setAttachments([]);
       setMessages([]);
+      setIsResetDialogOpen(false);
     });
   };
 
@@ -212,7 +214,7 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
 
   return (
     <div className="flex flex-col w-full h-screen overflow-hidden">
-      <div className="flex justify-between items-center p-2 bg-background sticky top-0 z-10 border-b">
+      <div className="flex justify-between items-center p-2 bg-background sticky top-0 z-10 border-b px-4 md:px-8">
         <h2 className="text-lg font-semibold flex items-center">
           <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text mr-1">AI</span>
           <span>Benchmark</span>
@@ -238,7 +240,7 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
           {chatInstances.length > 0 && (
             <Button 
               variant="outline" 
-              onClick={resetBenchmark}
+              onClick={() => setIsResetDialogOpen(true)}
               className="md:px-2 md:h-[34px]"
             >
               Reset
@@ -248,11 +250,19 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
       </div>
 
       {chatInstances.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-full gap-4">
-          <p className="text-muted-foreground">
-            Select models to start benchmarking
-          </p>
-          <Button onClick={() => setIsDialogOpen(true)}>Select Models</Button>
+        <div className="flex flex-col items-center justify-center h-full gap-6 max-w-2xl mx-auto px-4">
+          <div className="text-center space-y-4">
+            <h3 className="text-xl font-medium">Benchmark de Modelos de Linguagem para Atendimento ao Cliente</h3>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Esta ferramenta permite comparar o desempenho de diferentes modelos de linguagem (LLMs) em cenários de atendimento ao cliente. Seguindo metodologias estabelecidas em benchmarks como Chatbot Arena, MT-Bench e HELM, nossa plataforma possibilita avaliar modelos simultaneamente usando os mesmos prompts, permitindo uma análise comparativa direta.
+            </p>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Selecione os modelos que deseja testar, insira suas consultas, e observe como cada um responde às mesmas situações. Esta ferramenta foi desenvolvida como parte de uma pesquisa acadêmica sobre avaliação sistemática de LLMs para suporte ao cliente, visando identificar os modelos mais eficazes e estabelecer diretrizes para otimização de assistentes virtuais.
+            </p>
+          </div>
+          <Button onClick={() => setIsDialogOpen(true)} className="mt-2">
+            Select Models
+          </Button>
         </div>
       ) : (
         <>
@@ -314,6 +324,33 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
         </>
       )}
 
+      {/* Reset confirmation dialog */}
+      <Dialog
+        open={isResetDialogOpen}
+        onOpenChange={(open) => startTransition(() => setIsResetDialogOpen(open))}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Benchmark</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to reset the benchmark? This will clear all current conversations.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => startTransition(() => setIsResetDialogOpen(false))}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={resetBenchmark}>
+              Reset
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Existing model selection dialog */}
       <Dialog
         open={isDialogOpen}
         onOpenChange={(open) => startTransition(() => setIsDialogOpen(open))}
