@@ -32,13 +32,6 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
-        },
-        "visibility": {
-          "name": "visibility",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'private'"
         }
       },
       "indexes": {},

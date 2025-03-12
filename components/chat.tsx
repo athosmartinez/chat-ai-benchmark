@@ -2,7 +2,7 @@
 
 import type { Attachment, Message } from 'ai';
 import { useChat } from 'ai/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 
 import { ChatHeader } from '@/components/chat-header';
@@ -12,24 +12,30 @@ import { fetcher, generateUUID } from '@/lib/utils';
 import { Artifact } from './artifact';
 import { MultimodalInput } from './multimodal-input';
 import { Messages } from './messages';
-import { VisibilityType } from './visibility-selector';
 import { useArtifactSelector } from '@/hooks/use-artifact';
 import { toast } from 'sonner';
 
+// Add these props to the Chat component
 export function Chat({
   id,
   initialMessages,
   selectedChatModel,
-  selectedVisibilityType,
   isReadonly,
-  selectedPromptId
+  selectedPromptId,
+  onPromptChange,
+  isBenchmark = false,
+  hideInput = false,
+  onRegisterMethods
 }: {
   id: string;
   initialMessages: Array<Message>;
   selectedChatModel: string;
-  selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
   selectedPromptId?: string | null;
+  onPromptChange?: (promptId: string) => void;
+  isBenchmark?: boolean;
+  hideInput?: boolean;
+  onRegisterMethods?: (methods: { append: any, stop: any }) => void;
 }) {
   const { mutate } = useSWRConfig();
 
@@ -45,18 +51,30 @@ export function Chat({
     reload,
   } = useChat({
     id,
-    body: { id, selectedChatModel: selectedChatModel, selectedPromptId: selectedPromptId },
     initialMessages,
-    experimental_throttle: 100,
-    sendExtraMessageFields: true,
-    generateId: generateUUID,
-    onFinish: () => {
-      mutate('/api/history');
+    body: {
+      chatId: id,
+      selectedChatModel,
+      selectedPromptId,
     },
-    onError: (error) => {
-      toast.error(error.message ?? 'An error occurred, please try again later');
+    onResponse: (response) => {
+      if (response.status === 401) {
+        toast.error(
+          'You need to be logged in to chat. Please sign in and try again.'
+        );
+      }
     },
   });
+
+  // Register methods for parent component to use
+  useEffect(() => {
+    if (onRegisterMethods) {
+      onRegisterMethods({
+        append,
+        stop
+      });
+    }
+  }, [append, stop, onRegisterMethods]);
 
   const { data: votes } = useSWR<Array<Vote>>(
     `/api/vote?chatId=${id}`,
@@ -68,12 +86,16 @@ export function Chat({
 
   return (
     <>
-      <div className="flex flex-col min-w-0 h-dvh bg-background">
+      <div className={`flex flex-col min-w-0 ${isBenchmark ? 'h-full' : 'h-dvh'} bg-background`}>
         <ChatHeader
           chatId={id}
           selectedModelId={selectedChatModel}
-          selectedVisibilityType={selectedVisibilityType}
-          isReadonly={isReadonly} userId={null} selectedPromptId={null}       />
+          isReadonly={isReadonly}
+          userId={null}
+          selectedPromptId={selectedPromptId ?? null}
+          onPromptChange={onPromptChange}
+          isBenchmark={isBenchmark}
+        />
 
         <Messages
           chatId={id}
@@ -86,8 +108,8 @@ export function Chat({
           isArtifactVisible={isArtifactVisible}
         />
 
-        <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">
-          {!isReadonly && (
+        {!hideInput && !isReadonly && (
+          <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">
             <MultimodalInput
               chatId={id}
               input={input}
@@ -101,26 +123,28 @@ export function Chat({
               setMessages={setMessages}
               append={append}
             />
-          )}
-        </form>
+          </form>
+        )}
       </div>
 
-      <Artifact
-        chatId={id}
-        input={input}
-        setInput={setInput}
-        handleSubmit={handleSubmit}
-        isLoading={isLoading}
-        stop={stop}
-        attachments={attachments}
-        setAttachments={setAttachments}
-        append={append}
-        messages={messages}
-        setMessages={setMessages}
-        reload={reload}
-        votes={votes}
-        isReadonly={isReadonly}
-      />
+      {!isBenchmark && (
+        <Artifact
+          chatId={id}
+          input={input}
+          setInput={setInput}
+          handleSubmit={handleSubmit}
+          isLoading={isLoading}
+          stop={stop}
+          attachments={attachments}
+          setAttachments={setAttachments}
+          append={append}
+          messages={messages}
+          setMessages={setMessages}
+          reload={reload}
+          votes={votes}
+          isReadonly={isReadonly}
+        />
+      )}
     </>
   );
 }

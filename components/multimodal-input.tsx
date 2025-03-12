@@ -27,11 +27,10 @@ import { ArrowUpIcon, PaperclipIcon, StopIcon } from './icons';
 import { PreviewAttachment } from './preview-attachment';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { SuggestedActions } from './suggested-actions';
+// import { SuggestedActions } from './suggested-actions';
 import equal from 'fast-deep-equal';
 
 function PureMultimodalInput({
-  chatId,
   input,
   setInput,
   isLoading,
@@ -44,7 +43,6 @@ function PureMultimodalInput({
   handleSubmit,
   className,
 }: {
-  chatId: string;
   input: string;
   setInput: (value: string) => void;
   isLoading: boolean;
@@ -118,8 +116,7 @@ function PureMultimodalInput({
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
   const submitForm = useCallback(() => {
-    window.history.replaceState({}, '', `/chat/${chatId}`);
-
+  
     handleSubmit(undefined, {
       experimental_attachments: attachments,
     });
@@ -137,7 +134,6 @@ function PureMultimodalInput({
     setAttachments,
     setLocalStorageInput,
     width,
-    chatId,
   ]);
 
   const uploadFile = async (file: File) => {
@@ -195,11 +191,11 @@ function PureMultimodalInput({
 
   return (
     <div className="relative w-full flex flex-col gap-4">
-      {messages.length === 0 &&
+      {/* {messages.length === 0 &&
         attachments.length === 0 &&
         uploadQueue.length === 0 && (
           <SuggestedActions append={append} chatId={chatId} />
-        )}
+        )} */}
 
       <input
         type="file"
