@@ -21,6 +21,7 @@ import { savePromptIdAsCookie } from "../app/(chat)/actions";
 import { PromptSelector } from "./prompt-selector";
 import { MultimodalInput } from "./multimodal-input";
 import { Attachment, Message, CreateMessage, ChatRequestOptions } from "ai";
+import { SidebarToggle } from "./sidebar-toggle";
 
 interface BenchmarkProps {
   initialPromptId?: string;
@@ -215,10 +216,13 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
   return (
     <div className="flex flex-col w-full h-screen overflow-hidden">
       <div className="flex justify-between items-center p-2 bg-background sticky top-0 z-10 border-b px-4 md:px-8">
-        <h2 className="text-lg font-semibold flex items-center">
-          <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text mr-1">AI</span>
-          <span>Benchmark</span>
-        </h2>
+        <div className="flex items-center gap-2">
+          <SidebarToggle />
+          <h2 className="text-lg font-semibold flex items-center">
+            <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text mr-1">AI</span>
+            <span>Benchmark</span>
+          </h2>
+        </div>
         <div className="flex gap-2 items-center">
           {/* Shared prompt selector */}
           {chatInstances.length > 0 && (
