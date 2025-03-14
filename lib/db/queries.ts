@@ -16,6 +16,7 @@ import {
   type Message,
   message,
   vote,
+  benchmark,
 } from "./schema";
 import { ArtifactKind } from "@/components/artifact";
 
@@ -408,6 +409,28 @@ export async function updatePrompt({
     return getPromptById({ id });
   } catch (error) {
     console.error("Failed to update prompt in database");
+    throw error;
+  }
+}
+
+export async function saveBenchmark({ id }: { id: string }) {
+  try {
+    return await db.insert(benchmark).values({ id, createdAt: new Date() });
+  } catch (error) {
+    console.error("Failed to save benchmark in database");
+    throw error;
+  }
+}
+
+export async function getBenchmarkById({ id }: { id: string }) {
+  try {
+    const [selectedBenchmark] = await db
+      .select()
+      .from(benchmark)
+      .where(eq(benchmark.id, id));
+    return selectedBenchmark || null;
+  } catch (error) {
+    console.error("Failed to get benchmark by id from database");
     throw error;
   }
 }

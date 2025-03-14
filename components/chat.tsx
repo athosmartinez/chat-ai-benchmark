@@ -15,7 +15,6 @@ import { Messages } from './messages';
 import { useArtifactSelector } from '@/hooks/use-artifact';
 import { toast } from 'sonner';
 
-// Add these props to the Chat component
 export function Chat({
   id,
   initialMessages,
@@ -37,7 +36,6 @@ export function Chat({
   hideInput?: boolean;
   onRegisterMethods?: (methods: { append: any, stop: any }) => void;
 }) {
-  const { mutate } = useSWRConfig();
 
   const {
     messages,
@@ -66,7 +64,6 @@ export function Chat({
     },
   });
 
-  // Register methods for parent component to use
   useEffect(() => {
     if (onRegisterMethods) {
       onRegisterMethods({

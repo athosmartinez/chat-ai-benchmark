@@ -8,7 +8,6 @@ import {
   getMessageById,
 } from "@/lib/db/queries";
 import { myProvider } from "@/lib/ai/models";
-import { Prompt } from "@/components/prompt-selector";
 
 export async function saveChatModelAsCookie(model: string) {
   const cookieStore = await cookies();

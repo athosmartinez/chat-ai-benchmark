@@ -7,7 +7,6 @@ import {
 
 import { auth } from "@/app/(auth)/auth";
 import { myProvider } from "@/lib/ai/models";
-import { systemPrompt } from "@/lib/ai/prompts";
 import {
   deleteChatById,
   getChatById,
