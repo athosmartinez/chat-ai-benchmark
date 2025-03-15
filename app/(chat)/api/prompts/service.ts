@@ -6,7 +6,7 @@ import {
   getPrompts,
   getPromptById,
   updatePrompt
-} from "../../../lib/db/queries";
+} from "../../../../lib/db/queries";
 
 export type Prompt = {
   id: string;

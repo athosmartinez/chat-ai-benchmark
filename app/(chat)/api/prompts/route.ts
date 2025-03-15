@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "../../../app/(auth)/auth";
+import { auth } from "../../../(auth)/auth";
 
 import {
   createPrompt,

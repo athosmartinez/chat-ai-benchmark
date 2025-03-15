@@ -17,27 +17,29 @@ import { Chat } from "./chat";
 import { chatModels } from "../lib/ai/models";
 import { generateUUID } from "../lib/utils";
 import { toast } from "sonner";
-import { savePromptIdAsCookie } from "../app/(chat)/actions";
+import { savePromptIdAsCookie, saveBenchmark } from "../app/(chat)/actions";
 import { PromptSelector } from "./prompt-selector";
 import { MultimodalInput } from "./multimodal-input";
 import { Attachment, Message, CreateMessage, ChatRequestOptions } from "ai";
 import { SidebarToggle } from "./sidebar-toggle";
 
 interface BenchmarkProps {
-  initialPromptId?: string;
+  initialPromptId?: string | null ;
 }
 
 export function Benchmark({ initialPromptId }: BenchmarkProps) {
-  const router = useRouter();
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [chatInstances, setChatInstances] = useState<
-    Array<{ id: string; modelId: string }>
+    Array<{ id: string; modelId: string; benchmarkId?: string }>
   >([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(
     initialPromptId || null
   );
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [currentBenchmarkId, setCurrentBenchmarkId] = useState<string | null>(
+    null
+  );
 
   // Shared input state
   const [input, setInput] = useState<string>("");
@@ -70,39 +72,52 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
   };
 
   // Start benchmark with selected models
-  const startBenchmark = () => {
+  const startBenchmark = async () => {
     if (selectedModels.length === 0) {
       toast.error("Please select at least one model");
       return;
     }
 
-    startTransition(() => {
-      // Check if we already have chat instances and messages
-      if (chatInstances.length > 0 && messages.length > 0) {
-        // Create a new benchmark by resetting everything first
-        setChatInstances([]);
-        setInput("");
-        setAttachments([]);
-        setMessages([]);
-        
-        // Then add the new chat instances after a short delay to ensure state is updated
-        setTimeout(() => {
+    startTransition(async () => {
+      try {
+        // Generate a benchmark ID
+        const benchmarkId = generateUUID();
+        setCurrentBenchmarkId(benchmarkId);
+
+        // Save benchmark to database
+        await saveBenchmark({ id: benchmarkId });
+
+        // Check if we already have chat instances and messages
+        if (chatInstances.length > 0 && messages.length > 0) {
+          // Create a new benchmark by resetting everything first
+          setChatInstances([]);
+          setInput("");
+          setAttachments([]);
+          setMessages([]);
+
+          // Then add the new chat instances after a short delay to ensure state is updated
+          setTimeout(() => {
+            const newChatInstances = selectedModels.map((modelId) => ({
+              id: generateUUID(),
+              modelId,
+              benchmarkId,
+            }));
+            setChatInstances(newChatInstances);
+          }, 100);
+        } else {
           const newChatInstances = selectedModels.map((modelId) => ({
             id: generateUUID(),
             modelId,
+            benchmarkId,
           }));
           setChatInstances(newChatInstances);
-        }, 100);
-      } else {
-        // Just add the selected models to the current benchmark
-        const newChatInstances = selectedModels.map((modelId) => ({
-          id: generateUUID(),
-          modelId,
-        }));
-        setChatInstances(newChatInstances);
+        }
+
+        setIsDialogOpen(false);
+      } catch (error) {
+        console.error("Failed to create benchmark:", error);
+        toast.error("Failed to create benchmark");
       }
-      
-      setIsDialogOpen(false);
     });
   };
 
@@ -113,14 +128,14 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
       setInput("");
       setAttachments([]);
       setMessages([]);
+      setCurrentBenchmarkId(null);
       setIsResetDialogOpen(false);
     });
   };
 
   // Handle shared input submission
   const handleSharedSubmit = async (
-    event?: { preventDefault?: () => void } | undefined,
-    chatRequestOptions?: ChatRequestOptions | undefined
+    event?: { preventDefault?: () => void } | undefined
   ) => {
     if (event?.preventDefault) {
       event.preventDefault();
@@ -193,13 +208,14 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
   // Sync scrolling between chat instances
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (!chatContainersRef.current) return;
-    
+
     const scrolledContainer = e.currentTarget;
     const scrollTop = scrolledContainer.scrollTop;
-    
+
     // Get all chat containers
-    const chatContainers = chatContainersRef.current.querySelectorAll('.chat-container');
-    
+    const chatContainers =
+      chatContainersRef.current.querySelectorAll(".chat-container");
+
     // Sync scroll position for all containers except the one being scrolled
     chatContainers.forEach((container) => {
       if (container !== scrolledContainer && container instanceof HTMLElement) {
@@ -219,7 +235,9 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
         <div className="flex items-center gap-2">
           <SidebarToggle />
           <h2 className="text-lg font-semibold flex items-center">
-            <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text mr-1">AI</span>
+            <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text mr-1">
+              AI
+            </span>
             <span>Benchmark</span>
           </h2>
         </div>
@@ -242,8 +260,8 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
             {chatInstances.length > 0 ? "Change Models" : "Select Models"}
           </Button>
           {chatInstances.length > 0 && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setIsResetDialogOpen(true)}
               className="md:px-2 md:h-[34px]"
             >
@@ -256,12 +274,24 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
       {chatInstances.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full gap-6 max-w-2xl mx-auto px-4">
           <div className="text-center space-y-4">
-            <h3 className="text-xl font-medium">Benchmark de Modelos de Linguagem para Atendimento ao Cliente</h3>
+            <h3 className="text-xl font-medium">
+              Benchmark de Modelos de Linguagem para Atendimento ao Cliente
+            </h3>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Esta ferramenta permite comparar o desempenho de diferentes modelos de linguagem (LLMs) em cenários de atendimento ao cliente. Seguindo metodologias estabelecidas em benchmarks como Chatbot Arena, MT-Bench e HELM, nossa plataforma possibilita avaliar modelos simultaneamente usando os mesmos prompts, permitindo uma análise comparativa direta.
+              Esta ferramenta permite comparar o desempenho de diferentes
+              modelos de linguagem (LLMs) em cenários de atendimento ao cliente.
+              Seguindo metodologias estabelecidas em benchmarks como Chatbot
+              Arena, MT-Bench e HELM, nossa plataforma possibilita avaliar
+              modelos simultaneamente usando os mesmos prompts, permitindo uma
+              análise comparativa direta.
             </p>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Selecione os modelos que deseja testar, insira suas consultas, e observe como cada um responde às mesmas situações. Esta ferramenta foi desenvolvida como parte de uma pesquisa acadêmica sobre avaliação sistemática de LLMs para suporte ao cliente, visando identificar os modelos mais eficazes e estabelecer diretrizes para otimização de assistentes virtuais.
+              Selecione os modelos que deseja testar, insira suas consultas, e
+              observe como cada um responde às mesmas situações. Esta ferramenta
+              foi desenvolvida como parte de uma pesquisa acadêmica sobre
+              avaliação sistemática de LLMs para suporte ao cliente, visando
+              identificar os modelos mais eficazes e estabelecer diretrizes para
+              otimização de assistentes virtuais.
             </p>
           </div>
           <Button onClick={() => setIsDialogOpen(true)} className="mt-2">
@@ -300,6 +330,7 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
                   onRegisterMethods={(methods) =>
                     registerChatRef(chat.id, methods)
                   }
+                  benchmarkId={currentBenchmarkId}
                 />
               </div>
             ))}
@@ -331,13 +362,16 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
       {/* Reset confirmation dialog */}
       <Dialog
         open={isResetDialogOpen}
-        onOpenChange={(open) => startTransition(() => setIsResetDialogOpen(open))}
+        onOpenChange={(open) =>
+          startTransition(() => setIsResetDialogOpen(open))
+        }
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reset Benchmark</DialogTitle>
             <DialogDescription>
-              Are you sure you want to reset the benchmark? This will clear all current conversations.
+              Are you sure you want to reset the benchmark? This will clear all
+              current conversations.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

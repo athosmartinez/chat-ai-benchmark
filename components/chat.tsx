@@ -1,21 +1,20 @@
-'use client';
+"use client";
 
-import type { Attachment, Message } from 'ai';
-import { useChat } from 'ai/react';
-import { useEffect, useState } from 'react';
-import useSWR, { useSWRConfig } from 'swr';
+import type { Attachment, Message } from "ai";
+import { useChat } from "ai/react";
+import { useEffect, useState } from "react";
+import useSWR, { useSWRConfig } from "swr";
 
-import { ChatHeader } from '@/components/chat-header';
-import type { Vote } from '@/lib/db/schema';
-import { fetcher, generateUUID } from '@/lib/utils';
+import { ChatHeader } from "@/components/chat-header";
+import type { Vote } from "@/lib/db/schema";
+import { fetcher, generateUUID } from "@/lib/utils";
 
-import { Artifact } from './artifact';
-import { MultimodalInput } from './multimodal-input';
-import { Messages } from './messages';
-import { useArtifactSelector } from '@/hooks/use-artifact';
-import { toast } from 'sonner';
+import { Artifact } from "./artifact";
+import { MultimodalInput } from "./multimodal-input";
+import { Messages } from "./messages";
+import { useArtifactSelector } from "@/hooks/use-artifact";
+import { toast } from "sonner";
 
-// Add these props to the Chat component
 export function Chat({
   id,
   initialMessages,
@@ -25,7 +24,8 @@ export function Chat({
   onPromptChange,
   isBenchmark = false,
   hideInput = false,
-  onRegisterMethods
+  onRegisterMethods,
+  benchmarkId,
 }: {
   id: string;
   initialMessages: Array<Message>;
@@ -35,10 +35,9 @@ export function Chat({
   onPromptChange?: (promptId: string) => void;
   isBenchmark?: boolean;
   hideInput?: boolean;
-  onRegisterMethods?: (methods: { append: any, stop: any }) => void;
+  onRegisterMethods?: (methods: { append: any; stop: any }) => void;
+  benchmarkId?: string | null;
 }) {
-  const { mutate } = useSWRConfig();
-
   const {
     messages,
     setMessages,
@@ -56,29 +55,29 @@ export function Chat({
       chatId: id,
       selectedChatModel,
       selectedPromptId,
+      benchmarkId, // Include benchmarkId in the request body
     },
     onResponse: (response) => {
       if (response.status === 401) {
         toast.error(
-          'You need to be logged in to chat. Please sign in and try again.'
+          "You need to be logged in to chat. Please sign in and try again."
         );
       }
     },
   });
 
-  // Register methods for parent component to use
   useEffect(() => {
     if (onRegisterMethods) {
       onRegisterMethods({
         append,
-        stop
+        stop,
       });
     }
   }, [append, stop, onRegisterMethods]);
 
   const { data: votes } = useSWR<Array<Vote>>(
     `/api/vote?chatId=${id}`,
-    fetcher,
+    fetcher
   );
 
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
@@ -86,7 +85,11 @@ export function Chat({
 
   return (
     <>
-      <div className={`flex flex-col min-w-0 ${isBenchmark ? 'h-full' : 'h-dvh'} bg-background`}>
+      <div
+        className={`flex flex-col min-w-0 ${
+          isBenchmark ? "h-full" : "h-dvh"
+        } bg-background`}
+      >
         <ChatHeader
           chatId={id}
           selectedModelId={selectedChatModel}

@@ -23,11 +23,11 @@ export const chat = pgTable("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   createdAt: timestamp("createdAt").notNull(),
   title: text("title").notNull(),
+  benchmarkId: uuid("benchmarkId").references(() => benchmark.id),
   userId: uuid("userId")
     .notNull()
     .references(() => user.id),
-  promptId: uuid("promptId")
-    .references(() => prompts.id),
+  promptId: uuid("promptId").references(() => prompts.id),
 });
 
 export type Chat = InferSelectModel<typeof chat>;
@@ -124,3 +124,10 @@ export const prompts = pgTable("Prompts", {
 });
 
 export type Prompts = InferSelectModel<typeof prompts>;
+
+export const benchmark = pgTable("Benchmark", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  createdAt: timestamp("createdAt").notNull(),
+});
+
+export type Benchmark = InferSelectModel<typeof benchmark>;
