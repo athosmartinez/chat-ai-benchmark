@@ -1,7 +1,7 @@
 import "server-only";
 
 import { genSaltSync, hashSync } from "bcrypt-ts";
-import { and, asc, desc, eq, gt, gte, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
@@ -434,6 +434,46 @@ export async function getBenchmarkById({ id }: { id: string }) {
     return selectedBenchmark || null;
   } catch (error) {
     console.error("Failed to get benchmark by id from database");
+    throw error;
+  }
+}
+
+export async function getBenchmarksByUserId({ userId }: { userId: string }) {
+  try {
+    const benchmarkChats = await db
+      .select({
+        id: chat.id,
+        createdAt: chat.createdAt,
+        title: chat.title,
+        benchmarkId: chat.benchmarkId,
+      })
+      .from(chat)
+      .where(and(eq(chat.userId, userId), isNotNull(chat.benchmarkId)))
+      .orderBy(desc(chat.createdAt));
+
+    // Rest of your function remains the same
+    const benchmarks = benchmarkChats.reduce((acc, chat) => {
+      if (!chat.benchmarkId) return acc;
+
+      if (!acc[chat.benchmarkId]) {
+        acc[chat.benchmarkId] = {
+          id: chat.benchmarkId,
+          title: `Benchmark ${new Date(chat.createdAt).toLocaleString()}`,
+          createdAt: chat.createdAt,
+          chats: [],
+        };
+      }
+
+      acc[chat.benchmarkId].chats.push(chat);
+      return acc;
+    }, {} as Record<string, any>);
+
+    return Object.values(benchmarks).sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  } catch (error) {
+    console.error("Failed to get benchmarks by user ID from database");
     throw error;
   }
 }

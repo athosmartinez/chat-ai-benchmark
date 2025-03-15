@@ -24,7 +24,7 @@ import { Attachment, Message, CreateMessage, ChatRequestOptions } from "ai";
 import { SidebarToggle } from "./sidebar-toggle";
 
 interface BenchmarkProps {
-  initialPromptId?: string;
+  initialPromptId?: string | null ;
 }
 
 export function Benchmark({ initialPromptId }: BenchmarkProps) {
