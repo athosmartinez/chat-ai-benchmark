@@ -14,7 +14,6 @@ import {
 import { Checkbox } from "./ui/checkbox";
 import { Label } from "./ui/label";
 import { Chat } from "./chat";
-import { chatModels } from "../lib/ai/models";
 import { generateUUID } from "../lib/utils";
 import { toast } from "sonner";
 import { savePromptIdAsCookie, saveBenchmark } from "../app/(chat)/actions";
@@ -22,9 +21,11 @@ import { PromptSelector } from "./prompt-selector";
 import { MultimodalInput } from "./multimodal-input";
 import { Attachment, Message, CreateMessage, ChatRequestOptions } from "ai";
 import { SidebarToggle } from "./sidebar-toggle";
+import { Models } from "@/lib/db/schema";
+import { getModels } from "@/app/(models)/actions";
 
 interface BenchmarkProps {
-  initialPromptId?: string | null ;
+  initialPromptId?: string | null;
 }
 
 export function Benchmark({ initialPromptId }: BenchmarkProps) {
@@ -40,6 +41,8 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
   const [currentBenchmarkId, setCurrentBenchmarkId] = useState<string | null>(
     null
   );
+  const [models, setModels] = useState<Models[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState<boolean>(true);
 
   // Shared input state
   const [input, setInput] = useState<string>("");
@@ -51,6 +54,24 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
   const chatRefs = useRef<{ [key: string]: any }>({});
   // Reference for chat containers to sync scrolling
   const chatContainersRef = useRef<HTMLDivElement>(null);
+
+  // Fetch models from database
+  useEffect(() => {
+    const fetchModels = async () => {
+      setIsLoadingModels(true);
+      try {
+        const dbModels = await getModels();
+        setModels(dbModels);
+      } catch (error) {
+        console.error("Failed to fetch models:", error);
+        toast.error("Failed to load models");
+      } finally {
+        setIsLoadingModels(false);
+      }
+    };
+
+    fetchModels();
+  }, []);
 
   // Handle prompt selection from any chat instance
   const handlePromptChange = (promptId: string) => {
@@ -388,7 +409,7 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Existing model selection dialog */}
+      {/* Model selection dialog using models from database */}
       <Dialog
         open={isDialogOpen}
         onOpenChange={(open) => startTransition(() => setIsDialogOpen(open))}
@@ -403,37 +424,55 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
           </DialogHeader>
 
           <div className="grid grid-cols-1 gap-4 py-4">
-            {chatModels.map((model) => (
-              <div key={model.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={model.id}
-                  checked={selectedModels.includes(model.id)}
-                  onCheckedChange={() => toggleModelSelection(model.id)}
-                />
-                <Label
-                  htmlFor={model.id}
-                  className="flex-1 cursor-pointer"
-                  onClick={() => toggleModelSelection(model.id)}
-                >
-                  <div>{model.name}</div>
-                  {model.description && (
-                    <div className="text-xs text-muted-foreground">
-                      {model.description}
-                    </div>
-                  )}
-                </Label>
-              </div>
-            ))}
+            {isLoadingModels ? (
+              <div className="text-center py-4">Loading models...</div>
+            ) : models.length === 0 ? (
+              <div className="text-center py-4">No models found</div>
+            ) : (
+              (console.log("models", models),
+              models.map((model) => {
+                const displayName = `${model.provider} - ${model.officialName}`;
+
+                return (
+                  <div key={model.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={model.id}
+                      checked={selectedModels.includes(model.id)}
+                      onCheckedChange={() => toggleModelSelection(model.id)}
+                    />
+                    <Label
+                      htmlFor={model.id}
+                      className="flex-1 cursor-pointer"
+                      onClick={() => toggleModelSelection(model.id)}
+                    >
+                      <div>{displayName}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {model.inputPriceMillionToken &&
+                          `$${model.inputPriceMillionToken}/M tokens (input)`}
+                        {model.outputPriceMillionToken &&
+                          ` • $${model.outputPriceMillionToken}/M tokens (output)`}
+                      </div>
+                    </Label>
+                  </div>
+                );
+              }))
+            )}
           </div>
 
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => startTransition(() => setIsDialogOpen(false))}
+              disabled={isLoadingModels}
             >
               Cancel
             </Button>
-            <Button onClick={startBenchmark}>Start Benchmark</Button>
+            <Button
+              onClick={startBenchmark}
+              disabled={isLoadingModels || selectedModels.length === 0}
+            >
+              Start Benchmark
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

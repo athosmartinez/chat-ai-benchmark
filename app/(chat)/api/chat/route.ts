@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     messages,
     selectedChatModel,
     selectedPromptId,
-    benchmarkId
+    benchmarkId,
   }: {
     id: string;
     messages: Array<Message>;
@@ -64,7 +64,8 @@ export async function POST(request: Request) {
       userId: session.user.id,
       title,
       promptId: selectedPromptId,
-      benchmarkId
+      benchmarkId,
+      modelId: selectedChatModel,
     });
   }
 
@@ -75,7 +76,9 @@ export async function POST(request: Request) {
   let prompt = null;
 
   if (selectedPromptId) {
-    const { prompt: fetchedPrompt } = await getPromptById({ id: selectedPromptId });
+    const { prompt: fetchedPrompt } = await getPromptById({
+      id: selectedPromptId,
+    });
     prompt = fetchedPrompt;
   }
 
@@ -90,26 +93,8 @@ export async function POST(request: Request) {
         system: prompt,
         messages,
         maxSteps: 5,
-        experimental_activeTools:
-          selectedChatModel === "chat-model-reasoning"
-            ? []
-            : [
-                "getWeather",
-                "createDocument",
-                "updateDocument",
-                "requestSuggestions",
-              ],
         experimental_transform: smoothStream({ chunking: "word" }),
         experimental_generateMessageId: generateUUID,
-        tools: {
-          getWeather,
-          createDocument: createDocument({ session, dataStream }),
-          updateDocument: updateDocument({ session, dataStream }),
-          requestSuggestions: requestSuggestions({
-            session,
-            dataStream,
-          }),
-        },
         onFinish: async ({ response, reasoning }) => {
           if (session.user?.id) {
             try {

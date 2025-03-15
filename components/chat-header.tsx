@@ -12,7 +12,7 @@ import { PlusIcon, VercelIcon } from "./icons";
 import { useSidebar } from "./ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Prompt, PromptSelector } from "./prompt-selector";
-import { chatModels } from "../lib/ai/models";
+import { suportedModels } from "../lib/ai/models";
 
 function PureChatHeader({
   chatId,
@@ -22,7 +22,7 @@ function PureChatHeader({
   selectedPrompt,
   isReadonly,
   onPromptChange,
-  isBenchmark = false
+  isBenchmark = false,
 }: {
   chatId: string;
   userId: string | null;
@@ -44,8 +44,9 @@ function PureChatHeader({
     }
   };
 
-  // Find the selected model to display its name
-  const selectedModel = chatModels.find(model => model.id === selectedModelId);
+  const selectedModel = suportedModels.find(
+    (model) => model.id === selectedModelId
+  );
 
   return (
     <header className="flex sticky top-0 bg-background py-1.5 items-center px-2 md:px-2 gap-2">
@@ -72,7 +73,7 @@ function PureChatHeader({
       {/* For benchmark mode, just display the model name */}
       {isBenchmark ? (
         <div className="text-sm font-medium flex-1 px-2 py-1 bg-muted rounded-md">
-          {selectedModel?.name || selectedModelId}
+          {selectedModel?.officialName || selectedModelId}
         </div>
       ) : (
         <>
