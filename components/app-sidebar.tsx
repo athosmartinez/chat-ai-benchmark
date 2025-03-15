@@ -34,7 +34,7 @@ export function AppSidebar({ user }: { user: User }) {
               className="flex flex-row gap-3 items-center"
             >
               <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">
-                Chatbot
+                Benchmarks
               </span>
             </Link>           
           </div>
