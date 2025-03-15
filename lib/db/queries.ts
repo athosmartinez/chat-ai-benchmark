@@ -120,7 +120,7 @@ export async function saveMessages({ messages }: { messages: Array<Message> }) {
   try {
     return await db.insert(message).values(messages);
   } catch (error) {
-    console.error("Failed to save messages in database", error);
+    console.error("Failed to save messages in database");
     throw error;
   }
 }
@@ -133,7 +133,7 @@ export async function getMessagesByChatId({ id }: { id: string }) {
       .where(eq(message.chatId, id))
       .orderBy(asc(message.createdAt));
   } catch (error) {
-    console.error("Failed to get messages by chat id from database", error);
+    console.error("Failed to get messages by chat id from database");
     throw error;
   }
 }
@@ -487,6 +487,20 @@ export async function getAllModels() {
     return await db.select().from(models);
   } catch (error) {
     console.error("Failed to get models from database");
+    throw error;
+  }
+}
+
+export async function getModelById({ id }: { id: string }) {
+  try {
+    const result = await db
+      .select()
+      .from(models)
+      .where(eq(models.id, id))
+      .limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("Failed to get model by ID", error);
     throw error;
   }
 }

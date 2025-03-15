@@ -4,6 +4,13 @@ import { getModels } from "../app/(models)/actions";
 import { createDynamicProvider } from "../lib/ai/models";
 import { useEffect } from "react";
 
+// Extend the Window interface to include aiProvider
+declare global {
+  interface Window {
+    aiProvider: ReturnType<typeof createDynamicProvider>;
+  }
+}
+
 // This is a hidden component that initializes the provider
 export function ProviderInitializer() {
   useEffect(() => {

@@ -12,8 +12,20 @@ import {
 
 export const DEFAULT_CHAT_MODEL: string = "chat-model-openai-default";
 
+// Define provider type to avoid implicit any errors
+type ProviderFunction = typeof openai | typeof deepseek | typeof xai | typeof google | typeof perplexity | typeof fireworks;
+
+// Define model interface
+export interface ModelConfig {
+  id: string;
+  officialName: string;
+  provider: string;
+  inputPriceMillionToken?: string | null;
+  outputPriceMillionToken?: string | null;
+}
+
 // Map provider names to their respective model-creating functions
-const providerMap = {
+const providerMap: Record<string, ProviderFunction> = {
   openai: openai,
   deepseek: deepseek,
   xai: xai,
@@ -23,12 +35,13 @@ const providerMap = {
 };
 
 // This function creates a provider with dynamically configured models
-export function createDynamicProvider(modelConfigs) {
-  const languageModels = {};
+export function createDynamicProvider(modelConfigs: ModelConfig[]) {
+  const languageModels: Record<string, ReturnType<ProviderFunction>> = {};
 
   modelConfigs.forEach((model) => {
-    const provider = providerMap[model.provider?.toLowerCase()];
-    if (provider) {
+    const providerKey = model.provider?.toLowerCase();
+    const provider = providerKey ? providerMap[providerKey] : undefined;
+    if (provider && model.officialName) {
       languageModels[model.id] = provider(model.officialName);
     }
   });
@@ -54,7 +67,7 @@ export const myProvider = customProvider({
   imageModels: {},
 });
 
-interface ChatModel {
+export interface ChatModel {
   id: string;
   officialName: string;
 }
@@ -81,4 +94,8 @@ export const suportedModels: Array<ChatModel> = [
     id: "f2fd53f2-33a7-45f3-a6fa-f08b479383f5",
     officialName: "deepseek-chat",
   },
+  {
+    id: "f0e7d6db-a653-4bc7-9de8-1da40900a67d",
+    officialName: "sonar-pro",
+  }
 ];

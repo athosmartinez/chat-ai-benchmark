@@ -6,13 +6,14 @@ import {
 } from "ai";
 
 import { auth } from "@/app/(auth)/auth";
-import { myProvider } from "@/lib/ai/models";
+import { myProvider, createDynamicProvider } from "@/lib/ai/models";
 import {
   deleteChatById,
   getChatById,
   getPromptById,
   saveChat,
   saveMessages,
+  getModelById,
 } from "@/lib/db/queries";
 import {
   generateUUID,
@@ -55,6 +56,13 @@ export async function POST(request: Request) {
     return new Response("No user message found", { status: 400 });
   }
 
+  // Get model information from the database
+  const modelInfo = await getModelById({ id: selectedChatModel });
+
+  if (!modelInfo || !modelInfo.officialName || !modelInfo.provider) {
+    return new Response("Invalid model selection", { status: 400 });
+  }
+
   const chat = await getChatById({ id });
 
   if (!chat) {
@@ -86,10 +94,12 @@ export async function POST(request: Request) {
     return new Response("Create an prompt to use it!", { status: 400 });
   }
 
+  const dynamicProvider = createDynamicProvider([modelInfo]);
+
   return createDataStreamResponse({
     execute: (dataStream) => {
       const result = streamText({
-        model: myProvider.languageModel(selectedChatModel),
+        model: dynamicProvider.languageModel(selectedChatModel),
         system: prompt,
         messages,
         maxSteps: 5,
