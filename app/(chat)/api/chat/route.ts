@@ -34,11 +34,13 @@ export async function POST(request: Request) {
     messages,
     selectedChatModel,
     selectedPromptId,
+    benchmarkId
   }: {
     id: string;
     messages: Array<Message>;
     selectedChatModel: string;
     selectedPromptId: string;
+    benchmarkId: string;
   } = await request.json();
 
   const session = await auth();
@@ -62,6 +64,7 @@ export async function POST(request: Request) {
       userId: session.user.id,
       title,
       promptId: selectedPromptId,
+      benchmarkId
     });
   }
 

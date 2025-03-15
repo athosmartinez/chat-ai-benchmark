@@ -10,10 +10,8 @@ export default async function Page() {
   const id = generateUUID();
 
   const cookieStore = await cookies();
-  const modelIdFromCookie = cookieStore.get('chat-model');
   const promptIdFromCookie = cookieStore.get('prompt-id');
   
-  // Use the Benchmark component instead of a single Chat
   return (
     <>
       <Benchmark 

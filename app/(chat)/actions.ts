@@ -2,8 +2,8 @@
 
 import { generateText, Message } from "ai";
 import { cookies } from "next/headers";
-
 import {
+  saveBenchmark as dbSaveBenchmark,
   deleteMessagesByChatIdAfterTimestamp,
   getMessageById,
 } from "@/lib/db/queries";
@@ -44,4 +44,13 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
     chatId: message.chatId,
     timestamp: message.createdAt,
   });
+}
+
+export async function saveBenchmark({ id }: { id: string }) {
+  try {
+    return await dbSaveBenchmark({ id });
+  } catch (error) {
+    console.error("Failed to save benchmark", error);
+    throw error;
+  }
 }
