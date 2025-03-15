@@ -17,6 +17,7 @@ import {
   message,
   vote,
   benchmark,
+  models,
 } from "./schema";
 import { ArtifactKind } from "@/components/artifact";
 
@@ -55,12 +56,14 @@ export async function saveChat({
   title,
   promptId,
   benchmarkId,
+  modelId,
 }: {
   id: string;
   userId: string;
   title: string;
   promptId?: string | null;
   benchmarkId?: string | null;
+  modelId?: string | null;
 }) {
   try {
     return await db.insert(chat).values({
@@ -70,9 +73,10 @@ export async function saveChat({
       title,
       promptId: promptId || null,
       benchmarkId: benchmarkId || null,
+      modelId: modelId || null,
     });
   } catch (error) {
-    console.error("Failed to save chat in database");
+    console.error("Failed to save chat in database", error);
     throw error;
   }
 }
@@ -116,7 +120,7 @@ export async function saveMessages({ messages }: { messages: Array<Message> }) {
   try {
     return await db.insert(message).values(messages);
   } catch (error) {
-    console.error("Failed to save messages in database", error);
+    console.error("Failed to save messages in database");
     throw error;
   }
 }
@@ -129,7 +133,7 @@ export async function getMessagesByChatId({ id }: { id: string }) {
       .where(eq(message.chatId, id))
       .orderBy(asc(message.createdAt));
   } catch (error) {
-    console.error("Failed to get messages by chat id from database", error);
+    console.error("Failed to get messages by chat id from database");
     throw error;
   }
 }
@@ -474,6 +478,29 @@ export async function getBenchmarksByUserId({ userId }: { userId: string }) {
     );
   } catch (error) {
     console.error("Failed to get benchmarks by user ID from database");
+    throw error;
+  }
+}
+
+export async function getAllModels() {
+  try {
+    return await db.select().from(models);
+  } catch (error) {
+    console.error("Failed to get models from database");
+    throw error;
+  }
+}
+
+export async function getModelById({ id }: { id: string }) {
+  try {
+    const result = await db
+      .select()
+      .from(models)
+      .where(eq(models.id, id))
+      .limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("Failed to get model by ID", error);
     throw error;
   }
 }

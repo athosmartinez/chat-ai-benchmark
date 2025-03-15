@@ -55,7 +55,7 @@ export function Chat({
       chatId: id,
       selectedChatModel,
       selectedPromptId,
-      benchmarkId, // Include benchmarkId in the request body
+      benchmarkId,
     },
     onResponse: (response) => {
       if (response.status === 401) {

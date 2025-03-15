@@ -6,13 +6,14 @@ import {
 } from "ai";
 
 import { auth } from "@/app/(auth)/auth";
-import { myProvider } from "@/lib/ai/models";
+import { myProvider, createDynamicProvider } from "@/lib/ai/models";
 import {
   deleteChatById,
   getChatById,
   getPromptById,
   saveChat,
   saveMessages,
+  getModelById,
 } from "@/lib/db/queries";
 import {
   generateUUID,
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
     messages,
     selectedChatModel,
     selectedPromptId,
-    benchmarkId
+    benchmarkId,
   }: {
     id: string;
     messages: Array<Message>;
@@ -55,6 +56,13 @@ export async function POST(request: Request) {
     return new Response("No user message found", { status: 400 });
   }
 
+  // Get model information from the database
+  const modelInfo = await getModelById({ id: selectedChatModel });
+
+  if (!modelInfo || !modelInfo.officialName || !modelInfo.provider) {
+    return new Response("Invalid model selection", { status: 400 });
+  }
+
   const chat = await getChatById({ id });
 
   if (!chat) {
@@ -64,7 +72,8 @@ export async function POST(request: Request) {
       userId: session.user.id,
       title,
       promptId: selectedPromptId,
-      benchmarkId
+      benchmarkId,
+      modelId: selectedChatModel,
     });
   }
 
@@ -75,7 +84,9 @@ export async function POST(request: Request) {
   let prompt = null;
 
   if (selectedPromptId) {
-    const { prompt: fetchedPrompt } = await getPromptById({ id: selectedPromptId });
+    const { prompt: fetchedPrompt } = await getPromptById({
+      id: selectedPromptId,
+    });
     prompt = fetchedPrompt;
   }
 
@@ -83,33 +94,17 @@ export async function POST(request: Request) {
     return new Response("Create an prompt to use it!", { status: 400 });
   }
 
+  const dynamicProvider = createDynamicProvider([modelInfo]);
+
   return createDataStreamResponse({
     execute: (dataStream) => {
       const result = streamText({
-        model: myProvider.languageModel(selectedChatModel),
+        model: dynamicProvider.languageModel(selectedChatModel),
         system: prompt,
         messages,
         maxSteps: 5,
-        experimental_activeTools:
-          selectedChatModel === "chat-model-reasoning"
-            ? []
-            : [
-                "getWeather",
-                "createDocument",
-                "updateDocument",
-                "requestSuggestions",
-              ],
         experimental_transform: smoothStream({ chunking: "word" }),
         experimental_generateMessageId: generateUUID,
-        tools: {
-          getWeather,
-          createDocument: createDocument({ session, dataStream }),
-          updateDocument: updateDocument({ session, dataStream }),
-          requestSuggestions: requestSuggestions({
-            session,
-            dataStream,
-          }),
-        },
         onFinish: async ({ response, reasoning }) => {
           if (session.user?.id) {
             try {

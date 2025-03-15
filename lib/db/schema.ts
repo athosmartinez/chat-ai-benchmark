@@ -28,6 +28,7 @@ export const chat = pgTable("Chat", {
     .notNull()
     .references(() => user.id),
   promptId: uuid("promptId").references(() => prompts.id),
+  modelId: uuid("modelId").references(() => models.id),
 });
 
 export type Chat = InferSelectModel<typeof chat>;
@@ -131,3 +132,13 @@ export const benchmark = pgTable("Benchmark", {
 });
 
 export type Benchmark = InferSelectModel<typeof benchmark>;
+
+export const models = pgTable("Models", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  officialName: text("officialName").notNull(),
+  inputPriceMillionToken: text("inputPriceMillionToken").notNull(),
+  provider: text("provider").notNull(),
+  outputPriceMillionToken: text("outputPriceMillionToken").notNull(),
+});
+
+export type Models = InferSelectModel<typeof models>;
