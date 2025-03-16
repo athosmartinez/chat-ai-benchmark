@@ -123,7 +123,8 @@ function PureMultimodalInput({
     handleSubmit(undefined, {
       experimental_attachments: attachments,
     });
-
+    
+    setInput("");
     setAttachments([]);
     setLocalStorageInput("");
     resetHeight();
