@@ -162,6 +162,15 @@ export function SidebarHistory({ user }: { user: User }) {
                               <span>{chat.title}</span>
                             </Link>
                           </SidebarMenuButton>
+                          {/* Add Trash Icon to delete chat */}
+                          <SidebarMenuAction
+                            onClick={() => {
+                              setDeleteId(chat.id);
+                              setShowDeleteDialog(true);
+                            }}
+                          >
+                            <TrashIcon />
+                          </SidebarMenuAction>
                         </SidebarMenuItem>
                       ))}
                     </SidebarMenu>
@@ -176,16 +185,15 @@ export function SidebarHistory({ user }: { user: User }) {
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogTitle>Você tem certeza que deseja excluir este chat?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your
-                chat and remove it from our servers.
+                Esta ação não pode ser desfeita. Isso excluirá permanentemente o chat e o removerá dos nossos servidores.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction onClick={handleDelete}>
-                Continue
+                Sim
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
