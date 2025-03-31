@@ -50,7 +50,7 @@ import {
 import type { Chat } from "@/lib/db/schema";
 import { fetcher } from "@/lib/utils";
 
-// First, let's define interfaces for the benchmark and chat data
+// Define interfaces for the benchmark and chat data
 interface BenchmarkChat {
   id: string;
   title: string;
@@ -79,7 +79,7 @@ export function SidebarHistory({ user }: { user: User }) {
     fallbackData: [],
   });
 
-  // NEW: Add SWR for benchmarks with type annotation
+  // Add SWR for benchmarks with type annotation
   const { data: benchmarks = [], isLoading: isBenchmarksLoading } = useSWR<Benchmark[]>(
     user ? "/api/getBenchmarksByUserId" : null,
     fetcher
@@ -138,8 +138,9 @@ export function SidebarHistory({ user }: { user: User }) {
               {benchmarks.map((benchmark: Benchmark) => (
                 <SidebarMenuItem key={benchmark.id}>
                   <SidebarMenuButton asChild>
+                    {/* Link to the history page for the benchmark */}
                     <Link
-                      href={`/benchmark/${benchmark.id}`}
+                      href={`/benchmark/${benchmark.id}/history`}
                       onClick={() => setOpenMobile(false)}
                     >
                       <span>{benchmark.title}</span>
@@ -162,7 +163,6 @@ export function SidebarHistory({ user }: { user: User }) {
                               <span>{chat.title}</span>
                             </Link>
                           </SidebarMenuButton>
-                          {/* Add Trash Icon to delete chat */}
                           <SidebarMenuAction
                             onClick={() => {
                               setDeleteId(chat.id);

@@ -504,3 +504,16 @@ export async function getModelById({ id }: { id: string }) {
     throw error;
   }
 }
+
+export async function getChatsByBenchmarkId({ benchmarkId }: { benchmarkId: string }) {
+  try {
+    return await db
+      .select()
+      .from(chat)
+      .where(eq(chat.benchmarkId, benchmarkId))
+      .orderBy(desc(chat.createdAt));
+  } catch (error) {
+    console.error("Failed to get chats by benchmark ID from database", error);
+    throw error;
+  }
+}
