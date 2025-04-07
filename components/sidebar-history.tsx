@@ -122,7 +122,7 @@ export function SidebarHistory({ user }: { user: User }) {
     return (
       <div className="flex flex-col gap-2 p-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <SidebarMenuSkeleton key={i} showIcon />
+          <SidebarMenuSkeleton key={i} showIcon index={i} />
         ))}
       </div>
     );
