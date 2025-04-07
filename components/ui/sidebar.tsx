@@ -666,7 +666,7 @@ const SidebarMenuSkeleton = React.forwardRef<
   return (
     <div
       ref={ref}
-      data-sidebar="menu-skeleton"  
+      data-sidebar="menu-skeleton"
       className={cn('rounded-md h-8 flex gap-2 px-2 items-center', className)}
       {...props}
     >
