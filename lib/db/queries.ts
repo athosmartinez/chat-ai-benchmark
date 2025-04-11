@@ -18,6 +18,7 @@ import {
   vote,
   benchmark,
   models,
+  userModels,
 } from "./schema";
 import { ArtifactKind } from "@/components/artifact";
 
@@ -505,7 +506,11 @@ export async function getModelById({ id }: { id: string }) {
   }
 }
 
-export async function getChatsByBenchmarkId({ benchmarkId }: { benchmarkId: string }) {
+export async function getChatsByBenchmarkId({
+  benchmarkId,
+}: {
+  benchmarkId: string;
+}) {
   try {
     return await db
       .select()
@@ -514,6 +519,74 @@ export async function getChatsByBenchmarkId({ benchmarkId }: { benchmarkId: stri
       .orderBy(desc(chat.createdAt));
   } catch (error) {
     console.error("Failed to get chats by benchmark ID from database", error);
+    throw error;
+  }
+}
+
+export async function getUserModels({ userId }: { userId: string }) {
+  try {
+    return await db
+      .select()
+      .from(userModels)
+      .where(eq(userModels.userId, userId));
+  } catch (error) {
+    console.error("Failed to get user models", error);
+    throw error;
+  }
+}
+
+export async function upsertUserModelApiKey({
+  userId,
+  modelId,
+  apiKey,
+}: {
+  userId: string;
+  modelId: string;
+  apiKey: string;
+}) {
+  try {
+    console.log("Upserting user model API key", userId, modelId, apiKey);
+
+    const result = await db
+      .insert(userModels)
+      .values({
+        userId,
+        modelId,
+        apiKey,
+      })
+      .onConflictDoUpdate({
+        target: [userModels.userId, userModels.modelId],
+        set: {
+          apiKey,
+        },
+      })
+      .returning({
+        updatedUserId: userModels.userId,
+        updatedModelId: userModels.modelId,
+        updatedApiKey: userModels.apiKey,
+      });
+
+    return result;
+  } catch (error) {
+    console.error("Failed to upsert user model API key", error);
+    throw error;
+  }
+}
+export async function deleteUserModel({
+  userId,
+  modelId,
+}: {
+  userId: string;
+  modelId: string;
+}) {
+  try {
+    await db
+      .delete(userModels)
+      .where(
+        and(eq(userModels.userId, userId), eq(userModels.modelId, modelId))
+      );
+  } catch (error) {
+    console.error("Failed to delete user model", error);
     throw error;
   }
 }

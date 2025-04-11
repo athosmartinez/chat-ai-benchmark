@@ -142,3 +142,13 @@ export const models = pgTable("Models", {
 });
 
 export type Models = InferSelectModel<typeof models>;
+
+export const userModels = pgTable("UserModels", {
+  userId: uuid("user_id").notNull().references(() => user.id),
+  modelId: uuid("model_id").notNull().references(() => models.id),
+  apiKey: varchar("api_key", { length: 255 }),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.userId, table.modelId] }),
+}));
+
+export type UserModels = InferSelectModel<typeof userModels>;

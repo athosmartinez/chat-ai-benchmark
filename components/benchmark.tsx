@@ -22,7 +22,13 @@ import { MultimodalInput } from "./multimodal-input";
 import { Attachment, Message, CreateMessage, ChatRequestOptions } from "ai";
 import { SidebarToggle } from "./sidebar-toggle";
 import { Models } from "@/lib/db/schema";
-import { getModels } from "@/app/(models)/actions";
+import {
+  getModels,
+  getUserModels,
+  upsertUserModelApiKey,
+  deleteUserModel,
+} from "@/app/(models)/actions";
+import { auth } from "@/app/(auth)/auth";
 
 interface BenchmarkProps {
   initialPromptId?: string | null;
@@ -55,6 +61,9 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
   // Reference for chat containers to sync scrolling
   const chatContainersRef = useRef<HTMLDivElement>(null);
 
+  // Add state for API keys
+  const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
+
   // Fetch models from database
   useEffect(() => {
     const fetchModels = async () => {
@@ -71,6 +80,25 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
     };
 
     fetchModels();
+  }, []);
+
+  // Fetch user models and their API keys
+  useEffect(() => {
+    const fetchUserModels = async () => {
+      try {
+        const userModels = await getUserModels();
+        const keys = userModels.reduce((acc: Record<string, string>, model) => {
+          acc[model.modelId] = model.apiKey || "";
+          return acc;
+        }, {});
+        setApiKeys(keys);
+      } catch (error) {
+        console.error("Failed to fetch user models:", error);
+        toast.error("Failed to load user models");
+      }
+    };
+
+    fetchUserModels();
   }, []);
 
   // Handle prompt selection from any chat instance
@@ -248,6 +276,39 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
   // Dummy append function for the shared input
   const dummyAppend = async () => {
     return null;
+  };
+
+  // Handle API key change
+  const handleApiKeyChange = (modelId: string, apiKey: string) => {
+    setApiKeys((prev) => ({ ...prev, [modelId]: apiKey }));
+  };
+
+  // Save API key
+  const saveApiKey = async (modelId: string) => {
+    try {
+      const result = await upsertUserModelApiKey(modelId, apiKeys[modelId]);
+      console.log("API key saved successfully", result);
+      toast.success("API key saved successfully");
+    } catch (error) {
+      console.error("Failed to save API key:", error);
+      toast.error("Failed to save API key");
+    }
+  };
+
+  // Remove API key
+  const removeApiKey = async (modelId: string) => {
+    try {
+      await deleteUserModel(modelId);
+      setApiKeys((prev) => {
+        const newKeys = { ...prev };
+        delete newKeys[modelId];
+        return newKeys;
+      });
+      toast.success("API key removed successfully");
+    } catch (error) {
+      console.error("Failed to remove API key:", error);
+      toast.error("Failed to remove API key");
+    }
   };
 
   return (
@@ -429,33 +490,60 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
             ) : models.length === 0 ? (
               <div className="text-center py-4">No models found</div>
             ) : (
-              (console.log("models", models),
               models.map((model) => {
                 const displayName = `${model.provider} - ${model.officialName}`;
 
                 return (
-                  <div key={model.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={model.id}
-                      checked={selectedModels.includes(model.id)}
-                      onCheckedChange={() => toggleModelSelection(model.id)}
-                    />
-                    <Label
-                      htmlFor={model.id}
-                      className="flex-1 cursor-pointer"
-                      onClick={() => toggleModelSelection(model.id)}
-                    >
-                      <div>{displayName}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {model.inputPriceMillionToken &&
-                          `$${model.inputPriceMillionToken}/M tokens (input)`}
-                        {model.outputPriceMillionToken &&
-                          ` • $${model.outputPriceMillionToken}/M tokens (output)`}
-                      </div>
-                    </Label>
+                  <div key={model.id} className="flex flex-col space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={model.id}
+                        checked={selectedModels.includes(model.id)}
+                        onCheckedChange={() => toggleModelSelection(model.id)}
+                      />
+                      <Label
+                        htmlFor={model.id}
+                        className="flex-1 cursor-pointer"
+                        onClick={() => toggleModelSelection(model.id)}
+                      >
+                        <div>{displayName}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {model.inputPriceMillionToken &&
+                            `$${model.inputPriceMillionToken}/M tokens (input)`}
+                          {model.outputPriceMillionToken &&
+                            ` • $${model.outputPriceMillionToken}/M tokens (output)`}
+                        </div>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={apiKeys[model.id] || ""}
+                        onChange={(e) =>
+                          handleApiKeyChange(model.id, e.target.value)
+                        }
+                        placeholder="Enter API key"
+                        className="input w-full text-sm"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => saveApiKey(model.id)}
+                        className="text-xs"
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => removeApiKey(model.id)}
+                        className="text-xs"
+                      >
+                        Remove
+                      </Button>
+                    </div>
                   </div>
                 );
-              }))
+              })
             )}
           </div>
 
@@ -464,12 +552,14 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
               variant="outline"
               onClick={() => startTransition(() => setIsDialogOpen(false))}
               disabled={isLoadingModels}
+              className="text-xs"
             >
               Cancel
             </Button>
             <Button
               onClick={startBenchmark}
               disabled={isLoadingModels || selectedModels.length === 0}
+              className="text-xs"
             >
               Start Benchmark
             </Button>
