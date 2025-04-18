@@ -296,23 +296,23 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
         <div className="flex flex-col items-center justify-center h-full gap-6 max-w-2xl mx-auto px-4">
           <div className="text-center space-y-4">
             <h3 className="text-xl font-medium">
-              Benchmark de Modelos de Linguagem para Atendimento ao Cliente
+              Language Model Benchmark for Customer Service
             </h3>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Esta ferramenta permite comparar o desempenho de diferentes
-              modelos de linguagem (LLMs) em cenários de atendimento ao cliente.
-              Seguindo metodologias estabelecidas em benchmarks como Chatbot
-              Arena, MT-Bench e HELM, nossa plataforma possibilita avaliar
-              modelos simultaneamente usando os mesmos prompts, permitindo uma
-              análise comparativa direta.
+              This tool allows you to compare the performance of different
+              language models (LLMs) in customer service scenarios. Following
+              established methodologies in benchmarks such as Chatbot Arena,
+              MT-Bench, and HELM, our platform enables you to evaluate models
+              simultaneously using the same prompts, allowing for direct
+              comparative analysis.
             </p>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Selecione os modelos que deseja testar, insira suas consultas, e
-              observe como cada um responde às mesmas situações. Esta ferramenta
-              foi desenvolvida como parte de uma pesquisa acadêmica sobre
-              avaliação sistemática de LLMs para suporte ao cliente, visando
-              identificar os modelos mais eficazes e estabelecer diretrizes para
-              otimização de assistentes virtuais.
+              Select the models you want to test, enter your queries, and
+              observe how each one responds to the same situations. This tool
+              was developed as part of academic research on systematic
+              evaluation of LLMs for customer support, aiming to identify the
+              most effective models and establish guidelines for optimizing
+              virtual assistants.
             </p>
           </div>
           <Button onClick={() => setIsDialogOpen(true)} className="mt-2">
