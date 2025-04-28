@@ -2,8 +2,8 @@ import { openai } from "@ai-sdk/openai";
 import { deepseek } from "@ai-sdk/deepseek";
 import { xai } from "@ai-sdk/xai";
 import { google } from "@ai-sdk/google";
-import { perplexity } from "@ai-sdk/perplexity";
 import { fireworks } from "@ai-sdk/fireworks";
+import { mistral } from "@ai-sdk/mistral";
 import {
   customProvider,
   extractReasoningMiddleware,
@@ -13,7 +13,13 @@ import {
 export const DEFAULT_CHAT_MODEL: string = "chat-model-openai-default";
 
 // Define provider type to avoid implicit any errors
-type ProviderFunction = typeof openai | typeof deepseek | typeof xai | typeof google | typeof perplexity | typeof fireworks;
+type ProviderFunction =
+  | typeof openai
+  | typeof deepseek
+  | typeof xai
+  | typeof google
+  | typeof fireworks
+  | typeof mistral;
 
 // Define model interface
 export interface ModelConfig {
@@ -30,8 +36,8 @@ const providerMap: Record<string, ProviderFunction> = {
   deepseek: deepseek,
   xai: xai,
   google: google,
-  perplexity: perplexity,
   fireworks: fireworks,
+  mistral: mistral,
 };
 
 // This function creates a provider with dynamically configured models
@@ -74,28 +80,14 @@ export interface ChatModel {
 
 // until not regiser keys per user
 export const suportedModels: Array<ChatModel> = [
-  {
-    id: "0bef68af-800b-4209-b3c2-c2dd43d54833",
-    officialName: "gpt-4o-mini",
-  },
-  {
-    id: "79e2d9a0-5e24-42d2-a7fb-36c825e1476d",
-    officialName: "gpt-4o",
-  },
-  {
-    id: "7891ba99-6e09-4593-80d2-63b7b8add618",
-    officialName: "gemini-2.0-flash",
-  },
-  {
-    id: "38aa7b15-e208-44d6-93ea-c3ba936909e9",
-    officialName: "grok-2-1212",
-  },
-  {
-    id: "f2fd53f2-33a7-45f3-a6fa-f08b479383f5",
-    officialName: "deepseek-chat",
-  },
-  {
-    id: "f0e7d6db-a653-4bc7-9de8-1da40900a67d",
-    officialName: "sonar-pro",
-  }
+  { id: "0bef68af-800b-4209-b3c2-c2dd43d54833", officialName: "gpt-4o-mini" },
+  { id: "15bb27df-35b4-42e4-ad2f-9f84c4e5eb48", officialName: "gpt-4-turbo" },
+  { id: "3619b2b2-5bcf-47c4-b841-0c3fd32c3f4b", officialName: "gemini-1.5-pro-latest" },
+  { id: "5cf21dd2-7454-4ea1-b36d-71a3ffc39c8d", officialName: "gemini-2.5-pro-exp-03-25" },
+  { id: "7891ba99-6e09-4593-80d2-63b7b8add618", officialName: "gemini-2.0-flash" },
+  { id: "79e2d9a0-5e24-42d2-a7fb-36c825e1476d", officialName: "gpt-4o" },
+  { id: "7ab92961-efb0-4ed7-94d1-1e3eb8f45cf2", officialName: "gpt-3.5-turbo" },
+  { id: "c6650344-7e27-46fc-8aad-1fb55ae8ffcc", officialName: "gpt-4.1" },
+  { id: "f2fd53f2-33a7-45f3-a6fa-f08b479383f5", officialName: "deepseek-chat" },
+  { id: "f43172c5-b9e7-4055-9cd9-ac7b71ce4a95", officialName: "deepseek-reasoner"}
 ];
