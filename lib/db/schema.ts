@@ -9,6 +9,7 @@ import {
   primaryKey,
   foreignKey,
   boolean,
+  bigint,
 } from "drizzle-orm/pg-core";
 
 export const user = pgTable("User", {
@@ -41,6 +42,7 @@ export const message = pgTable("Message", {
   role: varchar("role").notNull(),
   content: json("content").notNull(),
   createdAt: timestamp("createdAt").notNull(),
+  time: bigint("time", { mode: "number" }).notNull(),
 });
 
 export type Message = InferSelectModel<typeof message>;

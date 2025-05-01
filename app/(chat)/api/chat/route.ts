@@ -77,9 +77,13 @@ export async function POST(request: Request) {
     });
   }
 
+  // Save user message with time: 0
   await saveMessages({
-    messages: [{ ...userMessage, createdAt: new Date(), chatId: id }],
+    messages: [{ ...userMessage, createdAt: new Date(), chatId: id, time: 0 }],
   });
+
+  // Record the start time for the assistant response
+  const responseStartTime = Date.now();
 
   let prompt = null;
 
@@ -113,6 +117,10 @@ export async function POST(request: Request) {
                 reasoning,
               });
 
+              // Calculate elapsed time
+              const responseEndTime = Date.now();
+              const elapsedTime = responseEndTime - responseStartTime; // in ms
+
               await saveMessages({
                 messages: sanitizedResponseMessages.map((message) => {
                   return {
@@ -121,6 +129,7 @@ export async function POST(request: Request) {
                     role: message.role,
                     content: message.content,
                     createdAt: new Date(),
+                    time: elapsedTime, // Save the elapsed time
                   };
                 }),
               });
