@@ -3,7 +3,6 @@ import { deepseek } from "@ai-sdk/deepseek";
 import { xai } from "@ai-sdk/xai";
 import { google } from "@ai-sdk/google";
 import { fireworks } from "@ai-sdk/fireworks";
-import { mistral } from "@ai-sdk/mistral";
 import {
   customProvider,
   extractReasoningMiddleware,
@@ -19,7 +18,6 @@ type ProviderFunction =
   | typeof xai
   | typeof google
   | typeof fireworks
-  | typeof mistral;
 
 // Define model interface
 export interface ModelConfig {
@@ -37,7 +35,6 @@ const providerMap: Record<string, ProviderFunction> = {
   xai: xai,
   google: google,
   fireworks: fireworks,
-  mistral: mistral,
 };
 
 // This function creates a provider with dynamically configured models
