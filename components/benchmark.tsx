@@ -429,7 +429,6 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
             ) : models.length === 0 ? (
               <div className="text-center py-4">No models found</div>
             ) : (
-              (console.log("models", models),
               models.map((model) => {
                 const displayName = `${model.provider} - ${model.officialName}`;
 
@@ -455,7 +454,7 @@ export function Benchmark({ initialPromptId }: BenchmarkProps) {
                     </Label>
                   </div>
                 );
-              }))
+              })
             )}
           </div>
 
