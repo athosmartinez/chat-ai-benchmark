@@ -517,3 +517,20 @@ export async function getChatsByBenchmarkId({ benchmarkId }: { benchmarkId: stri
     throw error;
   }
 }
+export async function getAllVotes() {
+  try {
+    return await db
+      .select({
+        modelId: chat.modelId,
+        chatId: vote.chatId,
+        messageId: vote.messageId,
+        isUpvoted: vote.isUpvoted,
+      })
+      .from(vote)
+      .innerJoin(chat, eq(vote.chatId, chat.id));
+  } catch (error) {
+    console.error("Failed to get all votes", error);
+    throw error;
+  }
+}
+
