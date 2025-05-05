@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Table } from '@/components/ui/table';
+import BarChartComponent from '@/components/barchartcomponent'; // Importa o gráfico
 
 interface VoteData {
   [modelName: string]: { likes: number; dislikes: number };
@@ -31,7 +32,6 @@ export default function DashboardPage() {
     fetchVotes();
   }, []);
 
-  
   const rows = Object.entries(voteData).map(([modelName, { likes, dislikes }]) => ({
     modelo: modelName,
     likes,
@@ -55,17 +55,25 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 space-y-6">
       <div className="bg-card shadow-md rounded-lg p-6">
         <h1 className="text-2xl font-bold mb-4 text-foreground">Voting Dashboard by Model</h1>
+
         {rows.length === 0 ? (
           <p className="text-muted-foreground">Nenhum voto encontrado.</p>
         ) : (
-          <Table
-            headers={['Modelo', 'Likes', 'Dislikes']}
-            rows={rows}
-            rowKey="modelo"
-          />
+          <>
+            <Table
+              headers={['Modelo', 'Likes', 'Dislikes']}
+              rows={rows}
+              rowKey="modelo"
+            />
+
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4 text-foreground">Vote Graph</h2>
+              <BarChartComponent data={rows} />
+            </div>
+          </>
         )}
       </div>
     </div>
