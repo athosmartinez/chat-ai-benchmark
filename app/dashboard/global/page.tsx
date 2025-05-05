@@ -1,39 +1,72 @@
 'use client';
 
-import { Card, CardContent } from "../../../components/ui/card";
-import { Skeleton } from "../../../components/ui/skeleton";
+import { useEffect, useState } from 'react';
+import { Table } from '@/components/ui/table';
 
-export default function GlobalBenchmarkPage() {
-  return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold">Benchmark Global</h1>
+interface VoteData {
+  [modelName: string]: { likes: number; dislikes: number };
+}
 
-      {/* Cards de estatísticas iniciais (placeholder) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <Skeleton className="h-6 w-32 mb-2" />
-            <Skeleton className="h-4 w-20" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <Skeleton className="h-6 w-32 mb-2" />
-            <Skeleton className="h-4 w-20" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <Skeleton className="h-6 w-32 mb-2" />
-            <Skeleton className="h-4 w-20" />
-          </CardContent>
-        </Card>
+export default function DashboardPage() {
+  const [voteData, setVoteData] = useState<VoteData>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchVotes() {
+      try {
+        const response = await fetch('/api/vote/dashboard');
+        if (!response.ok) {
+          throw new Error('Erro ao buscar dados');
+        }
+        const data = await response.json();
+        setVoteData(data);
+      } catch (err) {
+        setError('Erro ao carregar os dados do dashboard');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchVotes();
+  }, []);
+
+  
+  const rows = Object.entries(voteData).map(([modelName, { likes, dislikes }]) => ({
+    modelo: modelName,
+    likes,
+    dislikes,
+  }));
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-4">
+        <p className="text-foreground">Carregando...</p>
       </div>
+    );
+  }
 
-      {/* Aqui depois virão os gráficos e a tabela */}
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Comparativo Geral</h2>
-        <Skeleton className="h-64 w-full rounded-md" />
+  if (error) {
+    return (
+      <div className="container mx-auto p-4">
+        <p className="text-destructive">{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-4">
+      <div className="bg-card shadow-md rounded-lg p-6">
+        <h1 className="text-2xl font-bold mb-4 text-foreground">Voting Dashboard by Model</h1>
+        {rows.length === 0 ? (
+          <p className="text-muted-foreground">Nenhum voto encontrado.</p>
+        ) : (
+          <Table
+            headers={['Modelo', 'Likes', 'Dislikes']}
+            rows={rows}
+            rowKey="modelo"
+          />
+        )}
       </div>
     </div>
   );

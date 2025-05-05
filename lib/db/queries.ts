@@ -1,9 +1,10 @@
 import "server-only";
 
 import { genSaltSync, hashSync } from "bcrypt-ts";
-import { and, asc, desc, eq, gt, gte, inArray, isNotNull } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, inArray, isNotNull, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+
 
 import {
   user,
@@ -516,21 +517,34 @@ export async function getChatsByBenchmarkId({ benchmarkId }: { benchmarkId: stri
     console.error("Failed to get chats by benchmark ID from database", error);
     throw error;
   }
+};
+
+interface ModelVoteCountsResult {
+  modelId: string;
+  modelName: string;
+  upvotes: number;
+  downvotes: number;
 }
-export async function getAllVotes() {
+
+export async function getVoteCountsByModel(): Promise<ModelVoteCountsResult[]> {
   try {
-    return await db
+    const results = await db
       .select({
-        modelId: chat.modelId,
-        chatId: vote.chatId,
-        messageId: vote.messageId,
-        isUpvoted: vote.isUpvoted,
+        modelId: models.id,
+        modelName: models.officialName,
+        upvotes: sql<number>`cast(sum(case when ${vote.isUpvoted} = true then 1 else 0 end) as integer)`,
+        downvotes: sql<number>`cast(sum(case when ${vote.isUpvoted} = false then 1 else 0 end) as integer)`,
       })
-      .from(vote)
-      .innerJoin(chat, eq(vote.chatId, chat.id));
+      .from(models)
+      .leftJoin(chat, eq(chat.modelId, models.id))
+      .leftJoin(vote, eq(vote.chatId, chat.id))
+      .groupBy(models.id, models.officialName)
+      .orderBy(models.officialName)
+      .execute() as ModelVoteCountsResult[];
+
+    return results;
   } catch (error) {
-    console.error("Failed to get all votes", error);
+    console.error("Failed to get vote counts by model from database", error);
     throw error;
   }
 }
-
